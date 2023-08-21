@@ -12,13 +12,28 @@ Before starting making this app, I had zero knowledge about Jetpack Compose and 
 moment, while doing some web researches, I met Jetpack Compose and I tried it, then I dropped my first app and I switched to Compose, restarting from scratches.
 
 ## Features
-- Material3 and MaterialYou: this app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refined the app for older models too, maybe in some future.
+### Material3 and MaterialYou 
+This app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refined the app for older models too, maybe in some future.
 
+### Custom API implementation
+This app is not using aallam's openai-kotlin client, I coded my own implementation of OpenAI's API.
 
-- This app is not using aallam's openai-kotlin client, I coded my own implementation of OpenAI's API.
+### Change the "System message"
+System message defines the behaviour the chatbot should have throughout the conversation
+#### Demo
+
+https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/dd9ccae3-9f27-4067-9715-4386cad001bf
+
+### Change the temperature
+The temperature is the level of randomness and unpredictability of the chabot's replies: the higher the value, the more creative it'll be.
+
 
 ## Demo
-https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/9f3511a7-8eca-4a3e-9e8b-88d67c06839c
+
+
+https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/cb763f5b-abd4-4e9b-82e9-e0c4f714aa6b
+
+
 
 
 ## Conclusion
