@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">DroidGPT</string>
+    <string name="version">0.0.1</string>
+    <string name="secret_code_sha256">7f2e63c2779ab174b296c9d9384b31dcfa6ad8f8bc22ba6d70fcc78dc068e787</string>
+
+    <!-- BUBBLES -->
+    <string name="you">You</string>
+
+    <!-- JSON -->
+    <string name="conversation">conversation.json</string>
+
+    <string name="toggle_drawer">Toggle drawer</string>
+    <string name="back">back</string>
+    <string name="settings">settings</string>
+    <string name="new_chat">new chat</string>
+</resources>
