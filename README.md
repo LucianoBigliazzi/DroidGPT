@@ -11,6 +11,11 @@ Soon after I started developing the app, OpenAI announced its official app, but 
 Before starting making this app, I had zero knowledge about Jetpack Compose and Material3 standards, in fact I started developing an early app using old standards and views using xml files: I was not happy about the result and it seemed too heavy for such a small app like this, in that
 moment, while doing some web researches, I met Jetpack Compose and I tried it, then I dropped my first app and I switched to Compose, restarting from scratches.
 
+
+## Demo
+https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/cb763f5b-abd4-4e9b-82e9-e0c4f714aa6b
+
+
 ## Features
 ### Material3 and MaterialYou 
 This app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refined the app for older models too, maybe in some future.
@@ -26,12 +31,6 @@ https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/dd9ccae3-9f27-4067
 
 ### Change the temperature
 The temperature is the level of randomness and unpredictability of the chabot's replies: the higher the value, the more creative it'll be.
-
-
-## Demo
-
-
-https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/cb763f5b-abd4-4e9b-82e9-e0c4f714aa6b
 
 
 
