@@ -17,5 +17,9 @@ moment, while doing some web researches, I met Jetpack Compose and I tried it, t
 
 - This app is not using aallam's openai-kotlin client, I coded my own implementation of OpenAI's API.
 
+## Demo
+https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/9f3511a7-8eca-4a3e-9e8b-88d67c06839c
+
+
 ## Conclusion
 This app still needs improvements, but it is perfectly functioning.
