@@ -95,7 +95,7 @@ fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: Ch
             },
             colors = topAppBarColors(containerColor = if(viewModel.highContrast.value) Color.Black else MaterialTheme.colorScheme.surface))
         },
-        content = { paddingValues -> SettingsContent(paddingValues, data, viewModel) }
+        content = { paddingValues -> SettingsContent(paddingValues, data, viewModel, navController) }
     )
 
 
@@ -103,7 +103,12 @@ fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: Ch
 
 
 @Composable
-fun SettingsContent(paddingValues: PaddingValues, data: Data, viewModel: ChatViewModel) {
+fun SettingsContent(
+    paddingValues: PaddingValues,
+    data: Data,
+    viewModel: ChatViewModel,
+    navController: NavHostController
+) {
 
     var showTemperatureDialog by remember {
         mutableStateOf(false)
@@ -290,17 +295,23 @@ fun SettingsContent(paddingValues: PaddingValues, data: Data, viewModel: ChatVie
 
     if(showTemperatureDialog){
         TemperatureDialog(
-            onDismiss = { showTemperatureDialog = false },
-            onConfirm = { value ->
-                viewModel.setTemperature(value.toString().take(3))
-                println(viewModel.getTemperature())
-                data.saveFloatToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.TEMPERATURE, viewModel.getTemperature().toFloat())
-                clearChat(viewModel, context, data)
-                Toast.makeText(context, "Temperature set to " + viewModel.getTemperature(), Toast.LENGTH_SHORT).show()
-                showTemperatureDialog = false
-            },
-            viewModel = viewModel
-        )
+            onDismiss = { showTemperatureDialog = false }
+        ) { value ->
+            viewModel.setTemperature(value.toString().take(3))
+            println(viewModel.getTemperature())
+            data.saveFloatToSharedPreferences(
+                SettingsLabels.SETTINGS,
+                SettingsLabels.TEMPERATURE,
+                viewModel.getTemperature().toFloat()
+            )
+            clearChat(viewModel, context, data)
+            Toast.makeText(
+                context,
+                "Temperature set to " + viewModel.getTemperature(),
+                Toast.LENGTH_SHORT
+            ).show()
+            showTemperatureDialog = false
+        }
     }
 }
 

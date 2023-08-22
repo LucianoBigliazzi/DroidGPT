@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -28,11 +31,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.R
 import com.droidgpt.ui.theme.DroidGPTTheme
 import java.util.Locale
 
@@ -75,8 +82,7 @@ fun ClearChatDialogPreview(){
 @Composable
 fun TemperatureDialog(
     onDismiss: () -> Unit,
-    onConfirm: (Float) -> Unit,
-    viewModel: ChatViewModel
+    onConfirm: (Float) -> Unit
 ){
 
     var temperatureValue by remember {
@@ -144,15 +150,12 @@ fun TemperatureDialogPreview(){
 
     DroidGPTTheme {
         TemperatureDialog(
-            onDismiss = { /*TODO*/ },
-            { },
-            viewModel = viewModel()
-        )
+            onDismiss = { /*TODO*/ }
+        ) { }
     }
 }
 
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ChangeApiKeyDialog(
     onDismiss: () -> Unit,
@@ -173,7 +176,7 @@ fun ChangeApiKeyDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Change key") },
+        title = { Text(text = "Change API key") },
         text = {
 
             Column {
@@ -240,35 +243,63 @@ fun ShowBehaviourDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Change behaviour") },
+        title = { Text(text = "System message") },
         text = {
 
             Column {
-                Text(
-                    text = "The system message helps set the behavior of the assistant." +
-                        " For example, you can modify the personality of the assistant " +
-                        "or provide specific instructions about how it should behave throughout the conversation."
-                )
 
+                DropdownInfo (
+                    title = "Info",
+                ){
+                    Text(
+                        text = stringResource(R.string.system_messag_info),
+                        modifier = Modifier.padding(start = 37.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                val currentSystemMessageStyled = buildAnnotatedString {
+                    append("Current system message:\n")
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.SemiBold)){
+                        append(currentSysMessage)
+                    }
+                }
+
+                Divider()
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Examples: \"You are a helpful assistant\", \"Parlami in dialetto romano\".\n" +
-                            "Suggestion: You can use something like \"Be brief\" to speed up the response time.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = currentSystemMessageStyled)
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(text = "Current system message: \"$currentSysMessage\"")
-
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "This action will clear the current chat",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.error
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val default = stringResource(R.string.you_are_a_helpful_assistant)
+                val suggestion = stringResource(R.string.be_brief)
+
+
+                Row (
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    OutlinedButton(onClick = { newBehaviour = default }) {
+                        Text(text = "Default")
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    OutlinedButton(onClick = { newBehaviour = suggestion }) {
+                        Text(text = suggestion)
+                    }
+                }
+
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -309,7 +340,7 @@ fun ShowBehaviourDialog(
 
 @Preview
 @Composable
-fun showBehaviourDialogPreview(){
+fun ShowBehaviourDialogPreview(){
     DroidGPTTheme {
         ShowBehaviourDialog(
             onDismiss = { /*TODO*/ },

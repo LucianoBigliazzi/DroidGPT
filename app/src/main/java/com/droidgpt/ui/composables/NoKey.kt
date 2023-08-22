@@ -2,6 +2,7 @@ package com.droidgpt.ui.composables
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.view.Window
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -16,10 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.droidgpt.data.KeyManager
@@ -64,7 +64,16 @@ fun checkProvidedKey(key : String, context : Context): Boolean {
 
 
 @Composable
-fun Login(navController: NavHostController, viewModel : ChatViewModel) {
+fun LoginScreen(navController: NavHostController, viewModel: ChatViewModel, window: Window) {
+
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+
+    Login(navController, viewModel)
+
+}
+
+@Composable
+fun Login(navController: NavHostController, viewModel: ChatViewModel) {
 
     val context : Context = LocalContext.current
 
@@ -166,7 +175,6 @@ fun Login(navController: NavHostController, viewModel : ChatViewModel) {
 
         }
     }
-
 }
 
 @Composable
@@ -182,7 +190,7 @@ fun ClickableHyperlink() {
 
         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)) {
             append("here")
-            addStringAnnotation("URL", "https://www.example.com", start = 0, end = 4)
+            addStringAnnotation("URL", "https://beta.openai.com/account/api-keys", start = 0, end = 4)
         }
 
         withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onSurface)) {

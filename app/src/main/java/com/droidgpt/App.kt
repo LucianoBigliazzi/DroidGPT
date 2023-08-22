@@ -17,6 +17,7 @@ import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.animatedComposable
 import com.droidgpt.ui.composables.ChatHistory
 import com.droidgpt.ui.composables.Login
+import com.droidgpt.ui.composables.LoginScreen
 import com.droidgpt.ui.composables.MainScreen
 import com.droidgpt.ui.composables.SettingsScreen
 import com.droidgpt.ui.theme.DroidGPTTheme
@@ -47,9 +48,9 @@ fun AppNavigation(window: Window) {
 
     if(apiKey != "null"){
         startDestination = Route.MAIN
-    } else {
+        //startDestination = Route.LOGIN
+    } else
         startDestination = Route.LOGIN
-    }
 
     //data.initializeJson() initialized in Data constructor
     viewModel.darkTheme.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DARK_THEME, isSystemInDarkTheme())
@@ -66,7 +67,7 @@ fun AppNavigation(window: Window) {
             SettingsScreen(navController = navController, window = window, data = data, viewModel = viewModel)
         }
         animatedComposable(Route.LOGIN) {
-            Login(navController = navController, viewModel)
+            LoginScreen(navController = navController, viewModel, window)
         }
         animatedComposable(Route.HISTORY){
             ChatHistory(navController = navController, viewModel = viewModel, data = data)
