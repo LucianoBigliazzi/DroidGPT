@@ -17,4 +17,5 @@
     <string name="be_brief">Be brief.</string>
     <string name="info">info</string>
     <string name="system_messag_info">The system message helps set the behavior of the assistant. For example, you can modify the personality of the assistant or provide specific instructions about how it should behave throughout the conversation.\nSuggestion: You can use something like \"Be brief\" to speed up completions time.</string>
+    <string name="tips">tips</string>
 </resources>

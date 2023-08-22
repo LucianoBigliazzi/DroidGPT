@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 
 class ChatViewModel : ViewModel() {
 
+    private var key = mutableStateOf("")
     var msgList = mutableStateListOf<ChatMessage>()
     private var msgCount = 0
     var connectionEstablished = false
@@ -90,6 +91,13 @@ class ChatViewModel : ViewModel() {
     fun addElement(msg : ChatMessage){
         msgList.add(msg)
         msgCount++
+    }
+
+    fun getKey() : String {
+        return key.value
+    }
+    fun setKey(newKey : String){
+        key.value = newKey
     }
 
     fun getMsgCount(): Int {

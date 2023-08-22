@@ -67,7 +67,7 @@ fun AppNavigation(window: Window) {
             SettingsScreen(navController = navController, window = window, data = data, viewModel = viewModel)
         }
         animatedComposable(Route.LOGIN) {
-            LoginScreen(navController = navController, viewModel, window)
+            Login(navController = navController, viewModel, window)
         }
         animatedComposable(Route.HISTORY){
             ChatHistory(navController = navController, viewModel = viewModel, data = data)
