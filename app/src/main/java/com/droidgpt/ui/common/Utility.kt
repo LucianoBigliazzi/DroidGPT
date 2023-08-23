@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.droidgpt.R
 
@@ -87,4 +88,20 @@ fun Tips(
             }
         )
     }
+}
+
+
+@Composable
+fun TopBarTitle(
+    text : String,
+    isError: Boolean,
+    modifier: Modifier = Modifier
+){
+    Text(
+        text = text,
+        color = if(!isError) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.titleLarge,
+        fontFamily = FontFamily.Default,
+        modifier = modifier
+    )
 }

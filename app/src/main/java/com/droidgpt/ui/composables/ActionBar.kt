@@ -2,7 +2,10 @@ package com.droidgpt.ui.composables
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Settings
@@ -10,11 +13,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,8 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -31,13 +32,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.droidgpt.R
 import com.droidgpt.data.Data
 import com.droidgpt.model.ChatViewModel
 import com.droidgpt.ui.common.ClearChatDialog
 import com.droidgpt.ui.common.Route
+import com.droidgpt.ui.common.TopBarTitle
+import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 
 
@@ -45,11 +51,8 @@ import com.droidgpt.ui.theme.parseSurfaceColor
 @Composable
 fun ActionBar(
     viewModel: ChatViewModel,
-    scrollBehavior: TopAppBarScrollBehavior,
     navController: NavHostController,
-    data: Data,
-    snackbarHost: SnackbarHostState,
-    onDrawerClick: () -> Unit
+    data: Data
 ) {
 
     val context = LocalContext.current
@@ -59,8 +62,8 @@ fun ActionBar(
     }
 
     //val title = "DroidGPT!".toCharArray()
-    val textStyle = MaterialTheme.typography.titleMedium
-    val scope = rememberCoroutineScope()
+    MaterialTheme.typography.titleMedium
+    rememberCoroutineScope()
 
     var clearChat by remember{
         mutableStateOf(false)
@@ -76,6 +79,8 @@ fun ActionBar(
     var goToChatHistory by remember {
         mutableStateOf(false)
     }
+
+    val title = stringResource(id = R.string.app_name)
 
 
     /**
@@ -103,29 +108,29 @@ fun ActionBar(
 
 
     TopAppBar(
-        navigationIcon = { IconButton(onClick = { goToChatHistory = true }){
-            Icon(
-                modifier = Modifier.size(24.dp),
-                painter = painterResource(id = R.drawable.history),
-                contentDescription = stringResource(id = R.string.toggle_drawer)
-            ) }
-        },
+//        navigationIcon = { IconButton(onClick = { goToChatHistory = true }){
+//            Icon(
+//                modifier = Modifier.size(24.dp),
+//                painter = painterResource(id = R.drawable.history),
+//                contentDescription = stringResource(id = R.string.toggle_drawer)
+//            ) }
+//        },
         title = {
 
-            if(connectionMark){
-                Text(
-                    text = viewModel.getChatTitle(),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontFamily = FontFamily.Default
-                )
-            }else{
-                Text(
-                    text = stringResource(id = R.string.app_name),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontFamily = FontFamily.Default
-                )
+            Row {
+                if(connectionMark)
+                    TopBarTitle(text = title, false, modifier = Modifier.align(Alignment.CenterVertically))
+                else
+                    TopBarTitle(text = title, isError = true, modifier = Modifier.align(Alignment.CenterVertically))
+
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = { goToChatHistory = true }, modifier = Modifier.align(Alignment.CenterVertically)){
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        painter = painterResource(id = R.drawable.history),
+                        contentDescription = stringResource(id = R.string.toggle_drawer)
+                    )
+                }
             }
 
 
@@ -206,5 +211,18 @@ fun clearChat(viewModel: ChatViewModel, context: Context, data: Data) {
         } catch (e : Exception) {
             e.stackTrace
         }
+    }
+}
+
+@Preview
+@Composable
+fun TopBarPreview(){
+
+    val viewModel : ChatViewModel = viewModel()
+    val navController = rememberNavController()
+    val data = Data(LocalContext.current)
+
+    DroidGPTTheme {
+        ActionBar(viewModel = viewModel, navController = navController, data = data)
     }
 }
