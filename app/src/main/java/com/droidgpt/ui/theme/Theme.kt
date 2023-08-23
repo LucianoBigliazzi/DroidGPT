@@ -59,12 +59,12 @@ fun DroidGPTTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            if(!isHighContrastModeEnabled){
-                window.statusBarColor = Color.Transparent.toArgb() //Default: primary
-                window.navigationBarColor = Color.Transparent.toArgb()
-            }else{
+            if(isHighContrastModeEnabled){
                 window.statusBarColor = Color.Black.toArgb() //Default: primary
                 window.navigationBarColor = Color.Black.toArgb()
+            }else{
+                window.statusBarColor = Color.Transparent.toArgb() //Default: primary
+                window.navigationBarColor = Color.Transparent.toArgb()
             }
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }

@@ -52,6 +52,7 @@ import com.droidgpt.model.ChatViewModel
 import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.Tips
 import com.droidgpt.ui.theme.DroidGPTTheme
+import com.droidgpt.ui.theme.parseSurfaceColor
 
 
 fun checkProvidedKey(key : String, context : Context): Boolean {
@@ -104,7 +105,8 @@ fun LoginScreen(navController: NavHostController, viewModel: ChatViewModel) {
                     Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = null)
                 }
             },
-            modifier = Modifier.imePadding()
+            modifier = Modifier.imePadding(),
+            containerColor = parseSurfaceColor(viewModel = viewModel)
         ) { paddingValues ->
             LoginContent(paddingValues, viewModel, showError)
         }

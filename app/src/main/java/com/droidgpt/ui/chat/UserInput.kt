@@ -26,6 +26,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,27 +49,19 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.droidgpt.model.ChatViewModel
-import com.droidgpt.ui.composables.LoadingReply
 import com.droidgpt.R
 import com.droidgpt.data.Data
+import com.droidgpt.model.ChatViewModel
+import com.droidgpt.ui.composables.LoadingReply
 import com.droidgpt.ui.theme.DroidGPTTheme
 
 const val titleInput = "Generate a title for this conversation. It must be short, maximum 4 words. No punctuation, translate in the language of the first message sent."
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun UserInput(viewModel: ChatViewModel, stateProvider: () -> LazyListState, data: Data){
+fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Data){
 
     val context = LocalContext.current
-
-    var reply by remember {
-        mutableStateOf("")
-    }
-
-    var error by remember {
-        mutableStateOf(false)
-    }
 
     var msg by remember {
         mutableStateOf("")
@@ -78,17 +71,11 @@ fun UserInput(viewModel: ChatViewModel, stateProvider: () -> LazyListState, data
         mutableStateOf(false)
     }
 
-    var capturedMsg by remember {
-        mutableStateOf(false)
-    }
-
-    var sendButtonClicked by remember { mutableStateOf(false) }
-
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
-    val keyboardController = LocalSoftwareKeyboardController.current
+    LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val coroutineScope = rememberCoroutineScope()
+    rememberCoroutineScope()
 
     val callback = {
         focusManager.clearFocus()
@@ -126,7 +113,7 @@ fun UserInput(viewModel: ChatViewModel, stateProvider: () -> LazyListState, data
             TextField(
                 value = msg,
                 onValueChange = {text -> msg = text},
-                placeholder = { Text(text = "Enter message") },      //Replaces label
+                placeholder = { Text(text = "Enter message", color = MaterialTheme.colorScheme.onSurfaceVariant) },      //Replaces label
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(32.dp),
                 colors = TextFieldDefaults.colors(
@@ -159,7 +146,7 @@ fun UserInput(viewModel: ChatViewModel, stateProvider: () -> LazyListState, data
                         painter = painterResource(id = R.drawable.backspace),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
@@ -211,9 +198,9 @@ fun UserInput(viewModel: ChatViewModel, stateProvider: () -> LazyListState, data
 
     LaunchedEffect(viewModel.getMsgCount()){
         if(viewModel.getMsgCount() % 2 == 0 && viewModel.getMsgCount() > 1)
-            stateProvider().animateScrollToItem(viewModel.getMsgCount() - 1)
+            listState().animateScrollToItem(viewModel.getMsgCount() - 1)
         else
-            stateProvider().animateScrollToItem(viewModel.getMsgCount())
+            listState().animateScrollToItem(viewModel.getMsgCount())
     }
 
 
@@ -327,6 +314,6 @@ fun UserInputPreview(){
     val data = Data(context)
 
     DroidGPTTheme {
-        UserInput(viewModel = viewModel, stateProvider = { state }, data = data)
+        UserInput(viewModel = viewModel, { state }, data = data)
     }
 }

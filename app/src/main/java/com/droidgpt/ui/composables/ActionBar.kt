@@ -38,6 +38,7 @@ import com.droidgpt.data.Data
 import com.droidgpt.model.ChatViewModel
 import com.droidgpt.ui.common.ClearChatDialog
 import com.droidgpt.ui.common.Route
+import com.droidgpt.ui.theme.parseSurfaceColor
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -161,7 +162,7 @@ fun ActionBar(
         colors = TopAppBarDefaults.topAppBarColors(
             //scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-            containerColor = if(viewModel.highContrast.value) Color.Black else MaterialTheme.colorScheme.surface
+            containerColor = parseSurfaceColor(viewModel = viewModel)
         ),
         //scrollBehavior = scrollBehavior
     )

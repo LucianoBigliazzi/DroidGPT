@@ -29,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -62,6 +63,7 @@ import com.droidgpt.ui.common.ChangeApiKeyDialog
 import com.droidgpt.ui.common.ShowBehaviourDialog
 import com.droidgpt.ui.common.TemperatureDialog
 import com.droidgpt.ui.theme.DroidGPTTheme
+import com.droidgpt.ui.theme.parseSurfaceColor
 
 
 @Composable
@@ -93,9 +95,10 @@ fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: Ch
                     Icon(Icons.TwoTone.ArrowBack, null)
                 }
             },
-            colors = topAppBarColors(containerColor = if(viewModel.highContrast.value) Color.Black else MaterialTheme.colorScheme.surface))
+            colors = topAppBarColors(containerColor = parseSurfaceColor(viewModel = viewModel)))
         },
-        content = { paddingValues -> SettingsContent(paddingValues, data, viewModel, navController) }
+        content = { paddingValues -> SettingsContent(paddingValues, data, viewModel) },
+        containerColor = parseSurfaceColor(viewModel = viewModel)
     )
 
 
@@ -106,8 +109,7 @@ fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: Ch
 fun SettingsContent(
     paddingValues: PaddingValues,
     data: Data,
-    viewModel: ChatViewModel,
-    navController: NavHostController
+    viewModel: ChatViewModel
 ) {
 
     var showTemperatureDialog by remember {
@@ -142,7 +144,7 @@ fun SettingsContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = paddingValues)
-            .background(color = if (viewModel.highContrast.value) Color.Black else MaterialTheme.colorScheme.surface)
+            .background(color = parseSurfaceColor(viewModel = viewModel))
     ) {
 
         SettingsParagraphTitle(title = enginePreferencesText)
@@ -180,6 +182,11 @@ fun SettingsContent(
                     if(isSystemInDarkTheme){
                         viewModel.setDark(true)
                         data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DARK_THEME, true)
+                    } else if(viewModel.isDarkTheme() && viewModel.isHighContrast()){
+                        viewModel.setDark(false)
+                        viewModel.setHighContrast(false)
+                        data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DARK_THEME, false)
+                        data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.HIGH_CONTRAST, false)
                     } else {
                         viewModel.setDark(false)
                         data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DARK_THEME, false)
