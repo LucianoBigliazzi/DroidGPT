@@ -1,6 +1,11 @@
 package com.droidgpt.ui.chat
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -22,6 +31,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.droidgpt.R
 import com.droidgpt.model.ApiReply
 import com.droidgpt.model.ChatMessage
@@ -31,10 +41,14 @@ import java.util.Date
 import java.util.Locale
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BubbleOut(
     chatMessage: ChatMessage
 ){
+
+    val haptic = LocalHapticFeedback.current
+    val clipboardManager = ContextCompat.getSystemService(LocalContext.current, ClipboardManager::class.java)
 
     val time = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(chatMessage.time))
     val annotatedString = buildAnnotatedString {
@@ -74,17 +88,12 @@ fun BubbleOut(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        Text(
+        DisplayContentText(
             text = chatMessage.text,
-            textAlign = TextAlign.Start,
-            fontSize = 16.sp,
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
-                )
-                .padding(16.dp, 8.dp, 16.dp, 8.dp),
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            error = chatMessage.error,
+            isSent = true,
+            clipboardManager = clipboardManager,
+            haptic = haptic
         )
 
         Spacer(modifier = Modifier.height(2.dp))
@@ -101,10 +110,14 @@ fun ReplyBubble(chatMessage: ChatMessage){
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BubbleIn(
     chatMessage: ChatMessage
 ){
+
+    val haptic = LocalHapticFeedback.current
+    val clipboardManager = ContextCompat.getSystemService(LocalContext.current, ClipboardManager::class.java)
 
     val time = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(chatMessage.time))
 
@@ -145,29 +158,13 @@ fun BubbleIn(
 
         //resolveText(input = msg.text)
 
-        if(!chatMessage.error){
-            Text(
-                text = chatMessage.text,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
-                    )
-                    .padding(16.dp, 8.dp, 16.dp, 8.dp),
-            )
-        }else{
-            Text(
-                text = chatMessage.text,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
-                    )
-                    .padding(16.dp, 8.dp, 16.dp, 8.dp),
-            )
-        }
+        DisplayContentText(
+            text = chatMessage.text,
+            error = chatMessage.error,
+            isSent = false,
+            clipboardManager = clipboardManager,
+            haptic = haptic
+        )
 
         Spacer(modifier = Modifier.height(2.dp))
 
@@ -226,6 +223,41 @@ fun BubbleLoading(){
         Spacer(modifier = Modifier.height(2.dp))
     }
 
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DisplayContentText(
+    text: String,
+    error: Boolean,
+    isSent: Boolean,
+    clipboardManager: ClipboardManager?,
+    haptic: HapticFeedback,
+){
+
+    Text(
+        text = text,
+        color = if(!error) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+        modifier = Modifier
+            .background(
+                color = if (!error) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer,
+                shape = if(isSent) RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp) else RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+            )
+            .padding(16.dp, 8.dp, 16.dp, 8.dp)
+            .combinedClickable(
+                enabled = true,
+                onLongClickLabel = "bubble long click",
+                onLongClick = {
+                    if (clipboardManager != null) {
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText("message text", text))
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                },
+                onClick = {},
+                onDoubleClick = {}
+            ),
+    )
 }
 
 @Preview(showBackground = true)
