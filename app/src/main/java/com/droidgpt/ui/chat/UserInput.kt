@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -158,30 +159,29 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
         Box (
             modifier = Modifier.align(Alignment.CenterVertically)
         ) {
-            if(!viewModel.isLoading()){
-                IconButton(
-
-                    onClick = {
-                        msg = msg.trim()
-                        if(msg.isNotBlank() && !loading){
-                            viewModel.setLoading(true)
-                            callback()
-                            viewModel.performApiCall(
-                                question = msg,
-                                data = data,
-                                context = context,
-                                haptic = haptic,
-                                view = view
-                            )
-                            msg = ""    //Since i included a backspace button, I may remove this line
-                        }
+            IconButton(
+                enabled = msg.isNotBlank() && !viewModel.isLoading(),
+                onClick = {
+                    msg = msg.trim()
+                    if(msg.isNotBlank() && !viewModel.isLoading()){
+                        viewModel.setLoading(true)
+                        callback()
+                        viewModel.performApiCall(
+                            question = msg,
+                            data = data,
+                            context = context,
+                            haptic = haptic,
+                            view = view
+                        )
+                        msg = ""    //Since i included a backspace button, I may remove this line
                     }
-
-                ) {
-                    Icon(Icons.Outlined.Send, null, tint = MaterialTheme.colorScheme.primary)
                 }
-            } else {
-                LoadingReply()
+
+            ) {
+                if(msg.isNotBlank() && !viewModel.isLoading())
+                    Icon(Icons.Outlined.Send, null, tint = MaterialTheme.colorScheme.primary)
+                else
+                    Icon(Icons.Outlined.Send, null)
             }
         }
 

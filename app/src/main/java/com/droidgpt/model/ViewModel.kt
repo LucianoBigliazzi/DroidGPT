@@ -30,7 +30,7 @@ class ChatViewModel : ViewModel() {
     private val viewModelScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val loading = mutableStateOf(false)
     private val systemTheme = mutableStateOf(true)
-    var conversationList = mutableStateListOf<String>()
+    private var conversationList = mutableStateListOf<String>()
     private var clearChatButton = mutableStateOf(false)
 
 
