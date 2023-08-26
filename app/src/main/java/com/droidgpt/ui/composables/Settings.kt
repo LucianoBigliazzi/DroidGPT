@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -350,13 +351,18 @@ fun About(modifier: Modifier){
         text = secret,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.bodySmall, fontSize = 11.sp,
-        modifier = modifier.clickable(
+        modifier = modifier.combinedClickable(
             enabled = true,
-            onClick = {
-                clipboardManager?.setPrimaryClip(ClipData.newPlainText( "Secret code", secret))
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            }
-        )
+            onLongClickLabel = "about long click",
+            onLongClick = {
+                if (clipboardManager != null) {
+                    clipboardManager.setPrimaryClip(ClipData.newPlainText("secret code", secret))
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            },
+            onClick = {},
+            onDoubleClick = {}
+        ),
     )
 }
 

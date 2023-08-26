@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -241,7 +242,12 @@ fun DisplayContentText(
         color = if(!error) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer,
         modifier = Modifier
             .background(
-                color = if (!error) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer,
+                color = parseColor(
+                    isError =       error,
+                    isSent =        isSent,
+                    outgoingColor = MaterialTheme.colorScheme.primaryContainer,
+                    incomingColor = MaterialTheme.colorScheme.secondaryContainer,
+                    errorColor =    MaterialTheme.colorScheme.errorContainer),
                 shape = if(isSent) RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp) else RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
             )
             .padding(16.dp, 8.dp, 16.dp, 8.dp)
@@ -258,6 +264,24 @@ fun DisplayContentText(
                 onDoubleClick = {}
             ),
     )
+}
+
+
+fun parseColor(
+    isError: Boolean,
+    isSent: Boolean,
+    outgoingColor: Color,
+    incomingColor: Color,
+    errorColor: Color
+) : Color{
+
+    if(isError)
+        return errorColor
+
+    return if(isSent)
+        outgoingColor
+    else
+        incomingColor
 }
 
 @Preview(showBackground = true)
