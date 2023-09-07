@@ -9,7 +9,7 @@ I started this project for two main reasons:
 
 Soon after I started developing the app, OpenAI announced its official app, but this did not make me stop the devloping: I had free time and I wanted to learn Jetpack Compose and the new standards of Android app developing. I also wanted to code a MaterialYou app with dynamic colors.
 Before starting making this app, I had zero knowledge about Jetpack Compose and Material3 standards, in fact I started developing an early app using old standards and views using xml files: I was not happy about the result and it seemed too heavy for such a small app like this, in that
-moment, while doing some web researches, I met Jetpack Compose and I tried it, then I dropped my first app and I switched to Compose, restarting from scratches.
+moment, while doing some web researches, I met Jetpack Compose and I tried it, then I dropped my first app and I switched to Compose, restarting from scratch.
 
 
 ## Demo
@@ -20,8 +20,8 @@ https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/cb763f5b-abd4-4e9b
 ### Material3 and MaterialYou 
 This app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refined the app for older models too, maybe in some future.
 
-### Custom API implementation
-This app is not using aallam's openai-kotlin client, I coded my own implementation of OpenAI's API.
+### Custom API implementation (no more)
+I started this project coding my own OpenAI's API implementation, but later i switched to the prebuilt openai-kotlin client by aallam.
 
 ### Change the "System message"
 System message defines the behaviour the chatbot should have throughout the conversation
