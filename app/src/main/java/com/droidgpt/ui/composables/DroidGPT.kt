@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -26,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.twotone.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -55,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -68,14 +66,23 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.aallam.openai.api.BetaOpenAI
+import com.aallam.openai.api.chat.ChatRole
+import com.aallam.openai.api.image.ImageURL
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.droidgpt.R
 import com.droidgpt.data.Data
 import com.droidgpt.data.KeyManager
 import com.droidgpt.data.TextCode
 import com.droidgpt.data.TextResolver
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.model.TextMessage
+import com.droidgpt.ui.chat.BubbleIn
+import com.droidgpt.ui.chat.BubbleLoading
 import com.droidgpt.ui.chat.BubbleOut
-import com.droidgpt.ui.chat.ReplyBubble
 import com.droidgpt.ui.chat.UserInput
 import com.droidgpt.ui.common.SnackbarVisualsWithError
 import com.droidgpt.ui.theme.DroidGPTTheme
@@ -141,11 +148,6 @@ fun ScaffoldTest(navController: NavHostController, data: Data, viewModel: ChatVi
             data = data
         )
         },
-
-//        floatingActionButton = {
-//            if(state.canScrollForward)
-//                SmallFab({ state }, viewModel)
-//        },
         content = { paddingValues ->
             Conversation(paddingValues = paddingValues, viewModel, data = data)
         },
@@ -191,33 +193,7 @@ fun ScaffoldTest(navController: NavHostController, data: Data, viewModel: ChatVi
 }
 
 
-@Composable
-fun SmallFab(stateProvider: () -> LazyListState, viewModel: ChatViewModel) {
-
-    var clicked by remember {
-        mutableStateOf(false)
-    }
-
-    Box (
-        modifier = Modifier
-            .padding(start = 32.dp)
-            .fillMaxWidth()
-    ) {
-        SmallFloatingActionButton(onClick = {
-            clicked = true
-        }, modifier = Modifier.align(Alignment.Center) ) {
-            Icon(Icons.TwoTone.KeyboardArrowDown, contentDescription = null)
-        }
-    }
-
-    LaunchedEffect(clicked){
-        stateProvider().animateScrollToItem(viewModel.getMsgCount())
-        clicked = false
-    }
-}
-
-
-
+@OptIn(BetaOpenAI::class)
 @Composable
 fun Conversation(
     paddingValues: PaddingValues,
@@ -236,6 +212,17 @@ fun Conversation(
     var jumpToBottom by remember {
         mutableStateOf(false)
     }
+    var displayLottie by remember {
+        mutableStateOf(true)
+    }
+    var displayLoadingBubble by remember {
+        mutableStateOf(false)
+    }
+
+    val haptic = LocalHapticFeedback.current
+    var scrollOnNewMessage by remember {
+        mutableStateOf(false)
+    }
 
     Column (
         modifier = Modifier
@@ -244,6 +231,11 @@ fun Conversation(
         Box (
             modifier = Modifier.weight(1f)
         ) {
+
+            if(displayLottie){
+                DisplayPandaLottie()
+            }
+
             LazyColumn (
                 modifier = Modifier
                     .padding(
@@ -259,12 +251,20 @@ fun Conversation(
 //                    BubbleOut(ChatMessage(ApiReply("Ciao come va", false), true, 12.30.toLong()))
 //                }
 
-                items(viewModel.msgList) {chatMessage ->
-                    if(chatMessage.isSent) {
+                items(viewModel.libraryMsgList) {chatMessage ->
+                    displayLottie = false
+                    //displayLoadingBubble = !displayLoadingBubble
+                    if(chatMessage.role == ChatRole.User) {
                         BubbleOut(chatMessage = chatMessage)
-                    } else {
-                        ReplyBubble(chatMessage = chatMessage)
+                        displayLoadingBubble = true
+                    } else if(chatMessage.role == ChatRole.Assistant) {
+                        displayLoadingBubble = false
+                        BubbleIn(chatMessage = chatMessage)
+                        scrollOnNewMessage = true
+                    } else if(chatMessage.role == ChatRole.Function){
+                        BubbleLoading()
                     }
+
                 }
 
             }
@@ -285,10 +285,30 @@ fun Conversation(
 
     LaunchedEffect(jumpToBottom){
         if(jumpToBottom){
-            listState.animateScrollToItem(viewModel.getMsgCount())
+            listState.animateScrollToItem(viewModel.libraryMsgList.size)
             jumpToBottom = false
         }
     }
+
+    LaunchedEffect(scrollOnNewMessage){
+        if(scrollOnNewMessage && viewModel.libraryMsgList.size > 0){
+            listState.animateScrollToItem(viewModel.libraryMsgList.size - 1)
+            scrollOnNewMessage = false
+        }
+    }
+
+}
+
+
+@Composable
+fun DisplayPandaLottie(){
+
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.panda))
+    
+    LottieAnimation(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
 
 }
 

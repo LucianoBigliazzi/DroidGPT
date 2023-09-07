@@ -12,12 +12,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.droidgpt.data.Data
 import com.droidgpt.data.labels.SettingsLabels
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.viewmodel.ChatViewModel
+import com.droidgpt.model.ChatViewModelFactory
 import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.animatedComposable
 import com.droidgpt.ui.composables.ChatHistory
 import com.droidgpt.ui.composables.Login
-import com.droidgpt.ui.composables.LoginScreen
 import com.droidgpt.ui.composables.MainScreen
 import com.droidgpt.ui.composables.SettingsScreen
 import com.droidgpt.ui.theme.DroidGPTTheme
@@ -40,7 +40,7 @@ fun AppNavigation(window: Window) {
 
     val context = LocalContext.current
     val data = Data(context)
-    val viewModel : ChatViewModel = viewModel()
+    val viewModel : ChatViewModel = viewModel(factory = ChatViewModelFactory(data = data))
     val navController = rememberNavController()
 
     val startDestination : String

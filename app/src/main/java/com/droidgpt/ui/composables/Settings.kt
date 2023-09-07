@@ -6,7 +6,6 @@ import android.view.Window
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -30,7 +29,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -40,7 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -59,7 +56,7 @@ import com.droidgpt.R
 import com.droidgpt.data.Data
 import com.droidgpt.data.KeyManager
 import com.droidgpt.data.labels.SettingsLabels
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.ChangeApiKeyDialog
 import com.droidgpt.ui.common.ShowBehaviourDialog
 import com.droidgpt.ui.common.TemperatureDialog
@@ -275,7 +272,8 @@ fun SettingsContent(
                 showBehaviourDialog = false
                 if(value.trim().isNotBlank()){
                     data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR, value)
-                    clearChat(viewModel, context, data)
+                    viewModel.setSystemMessage(value)
+                    //clearChat(viewModel, context, data) Unused with new library
                     Toast.makeText(context, "Custom behaviour set", Toast.LENGTH_SHORT).show()
                 } else {
                     data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR, "You are a helpful assistant")
@@ -291,7 +289,7 @@ fun SettingsContent(
             onConfirm = { value ->
                 showChangeApiKeyDialog = false
                 if(KeyManager.validateKey(value)) {
-                    data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.API_KEY, value)
+                    viewModel.changeAPIKey(value)
                     Toast.makeText(context, "New key accepted", Toast.LENGTH_SHORT).show()
                 }else{
                     Toast.makeText(context, "Key unchanged: invalid", Toast.LENGTH_SHORT).show()
@@ -312,7 +310,7 @@ fun SettingsContent(
                 SettingsLabels.TEMPERATURE,
                 viewModel.getTemperature().toFloat()
             )
-            clearChat(viewModel, context, data)
+            viewModel.clearList()
             Toast.makeText(
                 context,
                 "Temperature set to " + viewModel.getTemperature(),

@@ -1,5 +1,6 @@
 package com.droidgpt.ui.chat
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Send
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +27,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,15 +49,19 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.aallam.openai.api.BetaOpenAI
+import com.aallam.openai.api.chat.ChatCompletion
 import com.droidgpt.R
 import com.droidgpt.data.Data
-import com.droidgpt.model.ChatViewModel
-import com.droidgpt.ui.composables.LoadingReply
+import com.droidgpt.model.ApiReply
+import com.droidgpt.model.ChatMessage
+import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.theme.DroidGPTTheme
+import kotlinx.coroutines.launch
 
 const val titleInput = "Generate a title for this conversation. It must be short, maximum 4 words. No punctuation, translate in the language of the first message sent."
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, BetaOpenAI::class)
 @Composable
 fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Data){
 
@@ -89,6 +92,8 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
     var generateTitle by remember {
         mutableStateOf(false)
     }
+
+    val scope = rememberCoroutineScope()
 
     var timeOut : Long
     var timeIn : Long
@@ -156,25 +161,31 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
 
         Spacer(modifier = Modifier.width(8.dp))
 
+        var completion : ChatCompletion
+
         Box (
             modifier = Modifier.align(Alignment.CenterVertically)
         ) {
             IconButton(
                 enabled = msg.isNotBlank() && !viewModel.isLoading(),
                 onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     msg = msg.trim()
-                    if(msg.isNotBlank() && !viewModel.isLoading()){
-                        viewModel.setLoading(true)
-                        callback()
-                        viewModel.performApiCall(
-                            question = msg,
-                            data = data,
-                            context = context,
-                            haptic = haptic,
-                            view = view
-                        )
-                        msg = ""    //Since i included a backspace button, I may remove this line
+                    callback()
+//                        viewModel.performApiCall(
+//                            question = msg,
+//                            data = data,
+//                            context = context,
+//                            haptic = haptic,
+//                            view = view
+//                        )
+
+
+                    scope.launch {
+                        println("MESSAGE: $msg")
+                        viewModel.apiCallUsingLibrary(msg)
                     }
+                    //msg = ""    // Since I included a backspace button, I may remove this line
                 }
 
             ) {
@@ -196,68 +207,20 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
         }
     }
 
-    LaunchedEffect(viewModel.getMsgCount()){
-        if(viewModel.getMsgCount() % 2 == 0 && viewModel.getMsgCount() > 1)
-            listState().animateScrollToItem(viewModel.getMsgCount() - 1)
+    LaunchedEffect(viewModel.libraryMsgList.size){
+        if(viewModel.libraryMsgList.size % 2 == 0 && viewModel.libraryMsgList.size > 1)
+            listState().animateScrollToItem(viewModel.libraryMsgList.size - 1)
         else
-            listState().animateScrollToItem(viewModel.getMsgCount())
+            listState().animateScrollToItem(viewModel.libraryMsgList.size)
     }
 
 
 
-    if(viewModel.getGenerateCompletion()){
+    if(viewModel.getGenerateCompletion())
         LaunchedEffect(viewModel.getGenerateCompletion()){
-
-
-//            coroutineScope.launch {
-//                if(msg.isNotBlank()){
-//                    withContext(Dispatchers.IO){
-//
-//                        val text = msg
-//
-//                        if(!capturedMsg){
-//                            msg = ""
-//                            capturedMsg = true
-//                        }
-//
-//                        data.experimentalInterrogateAPI(text, false) { response ->
-//                            if (response != null) {
-//                                reply = response.text
-//                                error = response.error
-//                            }
-//                        }
-//                    }
-//
-//                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-//
-//                    timeIn = System.currentTimeMillis()
-//                    viewModel.removeLoading()
-//                    viewModel.addElement(ChatMessage(ApiReply(reply, error), false, timeIn))
-//                    capturedMsg = false
-//                    loading = false
-//                    //stateProvider().animateScrollToItem(viewModel.getMsgCount())
-//                    data.addAnswer(context, reply)
-//
-//
-//                    if(viewModel.getChatTitle() == "" || viewModel.getChatTitle() == "DroidGPT")
-//                        generateTitle = true
-//                }
-//            }
-
-//        reply = completion(msg)
-//        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-//
-//        timeIn = System.currentTimeMillis()
-//        viewModel.removeLoading()
-//        viewModel.addElement(ChatMessage(ApiReply(reply, error), false, timeIn))
-//
-//        loading = false
-//        capturedMsg = false
-//        data.addAnswer(context, reply)
-
             viewModel.setGenerateCompletion(false)
         }
-    }
+
 
 
     var check by remember {
@@ -303,15 +266,48 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
 }
 
 
+fun saveQuestion(
+    question: String,
+    viewModel: ChatViewModel
+){
+
+    val timeOut = System.currentTimeMillis()
+    //User message bubble:
+    viewModel.addElement(ChatMessage(ApiReply(question, false), true, timeOut))
+    //Loading bubble:
+    viewModel.addElement(ChatMessage(null, false, timeOut))
+}
+
+
+@OptIn(BetaOpenAI::class)
+fun saveReply(
+    completion: ChatCompletion,
+    data: Data,
+    viewModel: ChatViewModel,
+    context: Context
+){
+
+    val answer = completion.choices[0].message?.content
+
+    val timeIn = System.currentTimeMillis()
+    viewModel.removeLoading()
+    viewModel.addElement(ChatMessage(ApiReply(answer, false), false, timeIn))
+    data.addAnswer(context, answer)
+    println(data.getJsonString(context))
+    //haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    viewModel.setLoading(false)
+}
+
+
 
 @Preview(showBackground = true)
 @Composable
 fun UserInputPreview(){
 
     val context = LocalContext.current
-    val viewModel = ChatViewModel()
     val state = rememberLazyListState()
     val data = Data(context)
+    val viewModel = ChatViewModel(data)
 
     DroidGPTTheme {
         UserInput(viewModel = viewModel, { state }, data = data)

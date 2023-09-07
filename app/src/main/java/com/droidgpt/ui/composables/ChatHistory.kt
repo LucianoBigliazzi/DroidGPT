@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.navigation.NavHostController
 import com.droidgpt.R
 import com.droidgpt.data.Data
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.viewmodel.ChatViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)

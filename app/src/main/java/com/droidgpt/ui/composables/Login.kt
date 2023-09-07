@@ -46,9 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.droidgpt.data.Data
 import com.droidgpt.data.KeyManager
 import com.droidgpt.data.labels.SettingsLabels
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.Tips
 import com.droidgpt.ui.theme.DroidGPTTheme
@@ -263,7 +264,7 @@ fun ClickableHyperlink() {
 fun LoginPreview(){
 
     val navController = rememberNavController()
-    val viewModel = ChatViewModel()
+    val viewModel = ChatViewModel(Data(LocalContext.current))
 
     DroidGPTTheme {
         LoginScreen(navController = navController, viewModel = viewModel)

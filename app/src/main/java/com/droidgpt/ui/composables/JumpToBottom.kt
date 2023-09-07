@@ -1,5 +1,6 @@
 package com.droidgpt.ui.composables
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.height
@@ -63,6 +64,15 @@ fun JumpToBottom(
         )
     }
 }
+
+@Composable
+fun GoDownAnimation(index : Int){
+
+    AnimatedVisibility(visible = true) {
+        
+    }
+}
+
 
 @Preview
 @Composable

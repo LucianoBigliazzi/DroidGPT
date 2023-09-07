@@ -1,22 +1,34 @@
-package com.droidgpt.model
+package com.droidgpt.viewmodel
 
 import android.content.Context
 import android.view.SoundEffectConstants
 import android.view.View
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.lifecycle.ViewModel
+import com.aallam.openai.api.BetaOpenAI
+import com.aallam.openai.api.chat.ChatCompletion
+import com.aallam.openai.api.chat.ChatCompletionRequest
+import com.aallam.openai.api.chat.ChatRole
+import com.aallam.openai.api.http.Timeout
+import com.aallam.openai.api.model.ModelId
+import com.aallam.openai.client.OpenAI
+import com.aallam.openai.client.OpenAIConfig
 import com.droidgpt.data.Data
 import com.droidgpt.data.labels.DataLabels
+import com.droidgpt.data.labels.SettingsLabels
+import com.droidgpt.model.ApiReply
+import com.droidgpt.model.ChatMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
-class ChatViewModel : ViewModel() {
+@OptIn(BetaOpenAI::class)
+class ChatViewModel(data: Data) : ViewModel() {
 
     private var key = mutableStateOf("")
     var msgList = mutableStateListOf<ChatMessage>()
@@ -32,6 +44,74 @@ class ChatViewModel : ViewModel() {
     private val systemTheme = mutableStateOf(true)
     private var conversationList = mutableStateListOf<String>()
     private var clearChatButton = mutableStateOf(false)
+    var data : Data
+    private var openAI : OpenAI
+    private var config : OpenAIConfig
+    var libraryMsgList = mutableStateListOf<com.aallam.openai.api.chat.ChatMessage>()
+
+    init {
+        this.data = data
+        key.value = data.resolveKeyShared()
+        this.config = OpenAIConfig(
+            token = key.value,
+            timeout = Timeout(socket = 120.seconds)
+        )
+        openAI = OpenAI(config = config)
+        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)))
+    }
+
+   // var completionList = mutableStateListOf<ChatCompletion>()
+
+
+    @OptIn(BetaOpenAI::class)
+    suspend fun apiCallUsingLibrary(input: String): ChatCompletion {
+
+        loading.value = true
+
+        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.User, content = input))
+
+        startLoadingBubble()
+
+        val chatCompletionRequest = ChatCompletionRequest(
+            model = ModelId("gpt-3.5-turbo"),
+            messages = libraryMsgList,
+            temperature = temperature.value.toDouble()
+        )
+
+        val completion = openAI.chatCompletion(chatCompletionRequest)
+
+        stopLoadingBubble()
+
+        //completionList.add(completion)
+        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.Assistant, content = completion.choices[0].message?.content))
+
+        loading.value = false
+
+        return completion
+    }
+
+
+    @OptIn(BetaOpenAI::class)
+    private fun startLoadingBubble(){
+        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.Function, content = "", name = "loading"))
+    }
+
+    @OptIn(BetaOpenAI::class)
+    private fun stopLoadingBubble(){
+        libraryMsgList.removeLast()
+    }
+
+    @OptIn(BetaOpenAI::class)
+    fun setSystemMessage(text : String){
+        data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR, text)
+        libraryMsgList.clear()
+        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.System, content = text))
+    }
+
+    fun changeAPIKey(key : String){
+        this.key.value = key
+        data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.API_KEY, key)
+    }
 
 
     fun performApiCall(
@@ -74,16 +154,11 @@ class ChatViewModel : ViewModel() {
         sharedPreferences.edit().putString(DataLabels.HISTORY, conversationList.toString()).apply()
     }
 
-    fun retrieveList(string: String){
 
-        conversationList.clear()
-        val parts = string.trim('[', ']').split(",")
-        conversationList = parts.map { it.trim() } as SnapshotStateList<String>
-    }
-
-
+    @OptIn(BetaOpenAI::class)
     fun clearList(){
-        msgList.clear()
+        libraryMsgList.clear()
+        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)))
         msgCount = 0
         clearChatButton.value = false
     }

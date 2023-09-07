@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -13,7 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -31,15 +32,16 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.aallam.openai.api.BetaOpenAI
+import com.aallam.openai.api.chat.ChatRole
 import com.droidgpt.R
 import com.droidgpt.data.Data
-import com.droidgpt.model.ChatViewModel
+import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.ClearChatDialog
 import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.TopBarTitle
@@ -47,7 +49,7 @@ import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, BetaOpenAI::class)
 @Composable
 fun ActionBar(
     viewModel: ChatViewModel,
@@ -105,16 +107,13 @@ fun ActionBar(
 
     println("TOP APP BAR RECOMPOSED")
 
+    var switchCompletionExpanded by remember {
+        mutableStateOf(false)
+    }
+
 
 
     TopAppBar(
-//        navigationIcon = { IconButton(onClick = { goToChatHistory = true }){
-//            Icon(
-//                modifier = Modifier.size(24.dp),
-//                painter = painterResource(id = R.drawable.history),
-//                contentDescription = stringResource(id = R.string.toggle_drawer)
-//            ) }
-//        },
         title = {
 
             Row {
@@ -138,19 +137,27 @@ fun ActionBar(
 
         actions = {
 
-            if(viewModel.msgList.size > 0){
+//            Switch(
+//                modifier = Modifier.padding(end = 8.dp),
+//                checked = viewModel.currentCompletion.value,
+//                onCheckedChange = {
+//                    viewModel.currentCompletion.value = !viewModel.currentCompletion.value
+//                    viewModel.clearList()
+//                }
+//            )
+
+
+            if(viewModel.libraryMsgList.size > 1){
                 IconButton(onClick = {
 
-                    if(viewModel.msgList.isNotEmpty()){
-                        if(viewModel.msgList[viewModel.getMsgCount() - 1].reply != null){
+                    if(viewModel.libraryMsgList.isNotEmpty()){
+                        if(viewModel.libraryMsgList[viewModel.libraryMsgList.size - 1].role != ChatRole.Function){
                             clearChat = true
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         }else{
                             Toast.makeText(context, "Wait for the reply", Toast.LENGTH_SHORT).show()
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         }
-                    }else{
-                        Toast.makeText(context, "No messages to clear", Toast.LENGTH_SHORT).show()
                     }
 
                 }) {
@@ -189,8 +196,8 @@ fun ActionBar(
             onConfirm = {
                 clearChat = false
 
-                Toast.makeText(context, "Cleared ${viewModel.getMsgCount()} messages", Toast.LENGTH_SHORT).show()
-                clearChat(viewModel, context, data)
+                Toast.makeText(context, "Cleared ${viewModel.libraryMsgList.size} messages", Toast.LENGTH_SHORT).show()
+                viewModel.clearList()
             }
         )
     }
