@@ -1,5 +1,5 @@
 # DroidGPT
-This is my personal implementation of OpenAI APIs, the app is still young. Several upgrades are coming.
+DroidGPT is a custom OpenAI API client for Android that provides an easy to use chat interface built with Jetpack Compose.
 
 ## Purpose
 I started this project for two main reasons:
@@ -18,7 +18,7 @@ https://github.com/LucianoBigliazzi/DroidGPT/assets/101213045/cb763f5b-abd4-4e9b
 
 ## Features
 ### Material3 and MaterialYou 
-This app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refined the app for older models too, maybe in some future.
+This app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refine the app for older models too, maybe in some future.
 
 ### Custom API implementation (no more)
 I started this project coding my own OpenAI's API implementation, but later i switched to the prebuilt openai-kotlin client by aallam.
