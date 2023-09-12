@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
+import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.http.Timeout
 import com.aallam.openai.api.model.ModelId
@@ -19,19 +20,18 @@ import com.aallam.openai.client.OpenAIConfig
 import com.droidgpt.data.Data
 import com.droidgpt.data.labels.DataLabels
 import com.droidgpt.data.labels.SettingsLabels
-import com.droidgpt.model.ApiReply
-import com.droidgpt.model.ChatMessage
+import com.droidgpt.model.MessageData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(BetaOpenAI::class)
 class ChatViewModel(data: Data) : ViewModel() {
 
     private var key = mutableStateOf("")
-    var msgList = mutableStateListOf<ChatMessage>()
     private var msgCount = 0
     var connectionEstablished = false
     var darkTheme = mutableStateOf(false)
@@ -47,7 +47,7 @@ class ChatViewModel(data: Data) : ViewModel() {
     var data : Data
     private var openAI : OpenAI
     private var config : OpenAIConfig
-    var libraryMsgList = mutableStateListOf<com.aallam.openai.api.chat.ChatMessage>()
+    var libraryMsgList = mutableStateListOf<MessageData>()
 
     init {
         this.data = data
@@ -57,7 +57,7 @@ class ChatViewModel(data: Data) : ViewModel() {
             timeout = Timeout(socket = 120.seconds)
         )
         openAI = OpenAI(config = config)
-        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)))
+        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), null))
     }
 
    // var completionList = mutableStateListOf<ChatCompletion>()
@@ -68,13 +68,13 @@ class ChatViewModel(data: Data) : ViewModel() {
 
         loading.value = true
 
-        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.User, content = input))
+        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.User, content = input), LocalDateTime.now()))
 
         startLoadingBubble()
 
         val chatCompletionRequest = ChatCompletionRequest(
             model = ModelId("gpt-3.5-turbo"),
-            messages = libraryMsgList,
+            messages = libraryMsgList.map { it.chatMessage },
             temperature = temperature.value.toDouble()
         )
 
@@ -83,7 +83,7 @@ class ChatViewModel(data: Data) : ViewModel() {
         stopLoadingBubble()
 
         //completionList.add(completion)
-        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.Assistant, content = completion.choices[0].message?.content))
+        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.Assistant, content = completion.choices[0].message?.content), LocalDateTime.now()))
 
         loading.value = false
 
@@ -93,7 +93,7 @@ class ChatViewModel(data: Data) : ViewModel() {
 
     @OptIn(BetaOpenAI::class)
     private fun startLoadingBubble(){
-        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.Function, content = "", name = "loading"))
+        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.Function, content = "", name = "loading"), null))
     }
 
     @OptIn(BetaOpenAI::class)
@@ -105,7 +105,7 @@ class ChatViewModel(data: Data) : ViewModel() {
     fun setSystemMessage(text : String){
         data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR, text)
         libraryMsgList.clear()
-        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.System, content = text))
+        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = text), null))
     }
 
     fun changeAPIKey(key : String){
@@ -113,7 +113,7 @@ class ChatViewModel(data: Data) : ViewModel() {
         data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.API_KEY, key)
     }
 
-
+    // DEPRECATED
     fun performApiCall(
         question: String,
         data: Data,
@@ -127,15 +127,15 @@ class ChatViewModel(data: Data) : ViewModel() {
 
         val timeOut = System.currentTimeMillis()
         //User message bubble:
-        addElement(ChatMessage(ApiReply(question, false), true, timeOut))
+        //addElement(ChatMessage(ApiReply(question, false), true, timeOut))
         //Loading bubble:
-        addElement(ChatMessage(null, false, timeOut))
+        //addElement(ChatMessage(null, false, timeOut))
 
         viewModelScope.launch {
             data.experimentalInterrogateAPI(question, false){value ->
                 val timeIn = System.currentTimeMillis()
                 removeLoading()
-                addElement(ChatMessage(value, false, timeIn))
+                //addElement(ChatMessage(value, false, timeIn))
                 data.addAnswer(context, value.text)
                 println(data.getJsonString(context))
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -158,13 +158,13 @@ class ChatViewModel(data: Data) : ViewModel() {
     @OptIn(BetaOpenAI::class)
     fun clearList(){
         libraryMsgList.clear()
-        libraryMsgList.add(com.aallam.openai.api.chat.ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)))
+        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), null))
         msgCount = 0
         clearChatButton.value = false
     }
 
     fun addElement(msg : ChatMessage){
-        msgList.add(msg)
+        //msgList.add(msg)
         msgCount++
     }
 
@@ -180,7 +180,7 @@ class ChatViewModel(data: Data) : ViewModel() {
     }
 
     fun removeLoading(){
-        msgList.removeAt(msgCount - 1)
+        //msgList.removeAt(msgCount - 1)
         msgCount--
     }
 

@@ -2,7 +2,6 @@ package com.droidgpt.ui.chat
 
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -34,24 +33,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.aallam.openai.api.BetaOpenAI
+import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.droidgpt.R
-import com.droidgpt.model.ChatMessage
+import com.droidgpt.model.MessageData
+import com.droidgpt.model.TimeFormats
 import com.droidgpt.ui.common.DotsTyping
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 @OptIn(ExperimentalFoundationApi::class, BetaOpenAI::class)
 @Composable
 fun BubbleOut(
-    chatMessage: com.aallam.openai.api.chat.ChatMessage
+    messageData: MessageData
 ){
 
     val haptic = LocalHapticFeedback.current
     val clipboardManager = ContextCompat.getSystemService(LocalContext.current, ClipboardManager::class.java)
 
-    val time = SimpleDateFormat("HH:mm", Locale.ROOT).format(System.currentTimeMillis())
+    val time = messageData.messageTime
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(
             fontWeight = FontWeight.SemiBold,
@@ -65,7 +66,7 @@ fun BubbleOut(
             fontSize = 11.sp
         )
         ){
-            append(time)
+            append(time.format(TimeFormats.TIME))
         }
     }
 
@@ -89,7 +90,7 @@ fun BubbleOut(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        chatMessage.content?.let {
+        messageData.chatMessage.content?.let {
             DisplayContentText(
                 text = it,
                 error = false,
@@ -103,26 +104,17 @@ fun BubbleOut(
     }
 }
 
-@Composable
-fun ReplyBubble(chatMessage: ChatMessage){
-
-//    if(chatMessage.reply != null)
-//        BubbleIn(chatMessage = chatMessage)
-//    else
-//        BubbleLoading()
-}
-
 
 @OptIn(BetaOpenAI::class)
 @Composable
 fun BubbleIn(
-    chatMessage: com.aallam.openai.api.chat.ChatMessage
+    messageData: MessageData
 ){
 
     val haptic = LocalHapticFeedback.current
     val clipboardManager = ContextCompat.getSystemService(LocalContext.current, ClipboardManager::class.java)
 
-    val time = SimpleDateFormat("HH:mm", Locale.ROOT).format(System.currentTimeMillis())
+    val time = messageData.messageTime
 
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(
@@ -138,7 +130,7 @@ fun BubbleIn(
             fontSize = 11.sp
         )
         ){
-            append(time)
+            append(time.format(TimeFormats.TIME))
         }
     }
 
@@ -164,7 +156,7 @@ fun BubbleIn(
 
         //resolveText(input = msg.text)
 
-        chatMessage.content?.let {
+        messageData.chatMessage.content?.let {
             DisplayContentText(
                 text = it,
                 error = false,
@@ -297,9 +289,9 @@ fun parseColor(
 fun ChatPreviewIn(){
     MaterialTheme {
         Column {
-            BubbleIn(com.aallam.openai.api.chat.ChatMessage(ChatRole.Assistant, "Ciao come va?"))
+            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()))
 
-            BubbleIn(com.aallam.openai.api.chat.ChatMessage(ChatRole.Assistant, "Ciao come va?"))
+            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()))
         }
     }
 }
@@ -309,7 +301,7 @@ fun ChatPreviewIn(){
 @Composable
 fun ChatPreviewOut(){
     MaterialTheme {
-        BubbleOut(com.aallam.openai.api.chat.ChatMessage(ChatRole.User, "Ciao come va"))
+        BubbleOut(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()))
     }
 }
 

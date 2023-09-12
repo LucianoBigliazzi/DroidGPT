@@ -151,7 +151,7 @@ fun ActionBar(
                 IconButton(onClick = {
 
                     if(viewModel.libraryMsgList.isNotEmpty()){
-                        if(viewModel.libraryMsgList[viewModel.libraryMsgList.size - 1].role != ChatRole.Function){
+                        if(viewModel.libraryMsgList[viewModel.libraryMsgList.size - 1].chatMessage.role != ChatRole.Function){
                             clearChat = true
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         }else{
@@ -204,20 +204,6 @@ fun ActionBar(
 
     LaunchedEffect(viewModel.connectionEstablished){
         connectionMark = viewModel.connectionEstablished
-    }
-}
-
-fun clearChat(viewModel: ChatViewModel, context: Context, data: Data) {
-
-    if(viewModel.msgList.isNotEmpty()){
-        viewModel.clearList()
-        //viewModel.addElementToHistory(data.getJsonString(context), context)
-        data.deleteJson(context, data.conversationFileName)
-        try {
-            data.createJson(context, data.conversationFileName)
-        } catch (e : Exception) {
-            e.stackTrace
-        }
     }
 }
 

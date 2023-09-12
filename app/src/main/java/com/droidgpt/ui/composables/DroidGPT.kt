@@ -251,17 +251,17 @@ fun Conversation(
 //                    BubbleOut(ChatMessage(ApiReply("Ciao come va", false), true, 12.30.toLong()))
 //                }
 
-                items(viewModel.libraryMsgList) {chatMessage ->
+                items(viewModel.libraryMsgList) {messageData ->
                     displayLottie = false
                     //displayLoadingBubble = !displayLoadingBubble
-                    if(chatMessage.role == ChatRole.User) {
-                        BubbleOut(chatMessage = chatMessage)
+                    if(messageData.chatMessage.role == ChatRole.User) {
+                        BubbleOut(messageData = messageData)
                         displayLoadingBubble = true
-                    } else if(chatMessage.role == ChatRole.Assistant) {
+                    } else if(messageData.chatMessage.role == ChatRole.Assistant) {
                         displayLoadingBubble = false
-                        BubbleIn(chatMessage = chatMessage)
+                        BubbleIn(messageData = messageData)
                         scrollOnNewMessage = true
-                    } else if(chatMessage.role == ChatRole.Function){
+                    } else if(messageData.chatMessage.role == ChatRole.Function){
                         BubbleLoading()
                     }
 

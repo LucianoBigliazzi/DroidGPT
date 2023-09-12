@@ -266,40 +266,6 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
 }
 
 
-fun saveQuestion(
-    question: String,
-    viewModel: ChatViewModel
-){
-
-    val timeOut = System.currentTimeMillis()
-    //User message bubble:
-    viewModel.addElement(ChatMessage(ApiReply(question, false), true, timeOut))
-    //Loading bubble:
-    viewModel.addElement(ChatMessage(null, false, timeOut))
-}
-
-
-@OptIn(BetaOpenAI::class)
-fun saveReply(
-    completion: ChatCompletion,
-    data: Data,
-    viewModel: ChatViewModel,
-    context: Context
-){
-
-    val answer = completion.choices[0].message?.content
-
-    val timeIn = System.currentTimeMillis()
-    viewModel.removeLoading()
-    viewModel.addElement(ChatMessage(ApiReply(answer, false), false, timeIn))
-    data.addAnswer(context, answer)
-    println(data.getJsonString(context))
-    //haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-    viewModel.setLoading(false)
-}
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun UserInputPreview(){
