@@ -56,6 +56,7 @@ fun AppNavigation(window: Window) {
     viewModel.darkTheme.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DARK_THEME, isSystemInDarkTheme())
     viewModel.highContrast.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.HIGH_CONTRAST, false)
     viewModel.setSystemTheme(data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.SYSTEM_THEME, isSystemInDarkTheme()))
+    viewModel.stream.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.STREAM, true)
     //viewModel.retrieveList(data.getFromSharedPreferences(DataLabels.DATA, DataLabels.HISTORY))
 
     NavHost(navController = navController, startDestination = startDestination) {

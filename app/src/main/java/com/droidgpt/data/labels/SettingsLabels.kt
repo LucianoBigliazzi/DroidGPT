@@ -10,4 +10,5 @@ object SettingsLabels{
     const val BEHAVIOUR = "behaviour"
     const val HIGH_CONTRAST = "hc"
     const val SYSTEM_THEME = "sys_theme"
+    const val STREAM = "stream"
 }

@@ -31,4 +31,7 @@ public class MessageData {
     public void setMessageTime(LocalDateTime messageTime) {
         this.localDateTime = messageTime;
     }
+
+    public void append(String input){
+    }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.twotone.ArrowBack
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -165,6 +166,17 @@ fun SettingsContent(
             subtitle = "Change the initial behaviour",
             icon = painterResource(id = R.drawable.stream_apps),
             onClick = { showBehaviourDialog = true })
+
+        SwitchSettingsItem(
+            title = "Stream",
+            subtitle = "Progressively show incoming completion",
+            icon = Icons.Filled.PlayArrow,
+            onCheck = {
+                viewModel.stream.value = it
+                data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.STREAM, it)
+            },
+            check = viewModel.stream.value
+        )
 
 
         SettingsParagraphTitle(title = "Theme")

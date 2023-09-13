@@ -183,7 +183,10 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
 
                     scope.launch {
                         println("MESSAGE: $msg")
-                        viewModel.apiCallUsingLibrary(msg)
+                        if(viewModel.stream.value)
+                            viewModel.chunkCompletion(msg)
+                        else
+                            viewModel.apiCallUsingLibrary(msg)
                     }
                     //msg = ""    // Since I included a backspace button, I may remove this line
                 }
