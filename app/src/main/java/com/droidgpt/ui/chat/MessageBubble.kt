@@ -41,10 +41,8 @@ import com.droidgpt.model.TimeFormats
 import com.droidgpt.ui.common.DotsTyping
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 
-@OptIn(ExperimentalFoundationApi::class, BetaOpenAI::class)
 @Composable
 fun BubbleOut(
     messageData: MessageData,

@@ -1,6 +1,7 @@
 package com.droidgpt.viewmodel
 
 import android.content.Context
+import android.os.Vibrator
 import android.view.SoundEffectConstants
 import android.view.View
 import androidx.compose.material3.Text
@@ -211,7 +212,6 @@ class ChatViewModel(data: Data) : ViewModel() {
     }
 
 
-    @OptIn(BetaOpenAI::class)
     fun clearList(){
         libraryMsgList.clear()
         libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), null))
