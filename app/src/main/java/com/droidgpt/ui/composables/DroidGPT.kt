@@ -3,8 +3,13 @@ package com.droidgpt.ui.composables
 import android.annotation.SuppressLint
 import android.view.Window
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -21,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -30,12 +36,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -47,11 +55,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -87,6 +98,7 @@ import com.droidgpt.ui.chat.UserInput
 import com.droidgpt.ui.common.SnackbarVisualsWithError
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -224,6 +236,11 @@ fun Conversation(
         mutableStateOf(false)
     }
 
+    var autoScrollDown by remember {
+        mutableStateOf(false)
+    }
+    val focusManager = LocalFocusManager.current
+
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -255,12 +272,15 @@ fun Conversation(
                     displayLottie = false
                     //displayLoadingBubble = !displayLoadingBubble
                     if(messageData.chatMessage.role == ChatRole.User) {
-                        BubbleOut(messageData = messageData)
+                        BubbleOut(messageData = messageData, viewModel.isHapticEnabled.value)
                         displayLoadingBubble = true
                     } else if(messageData.chatMessage.role == ChatRole.Assistant) {
                         displayLoadingBubble = false
-                        BubbleIn(messageData = messageData)
-                        scrollOnNewMessage = true
+                        BubbleIn(messageData = messageData, viewModel.isHapticEnabled.value)
+                        if(!viewModel.stream.value)
+                            scrollOnNewMessage = true
+                        if(listState.canScrollForward && viewModel.isLoading())
+                            autoScrollDown = true
                     } else if(messageData.chatMessage.role == ChatRole.Function){
                         BubbleLoading()
                     }
@@ -269,20 +289,31 @@ fun Conversation(
 
             }
 
-            if(showButton){
-                Button(
-                    onClick = { jumpToBottom = true },
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                ) {
-                    Icon(imageVector = Icons.Outlined.KeyboardArrowDown, contentDescription = "Jump to bottom")
+            LaunchedEffect(key1 = autoScrollDown){
+                if(autoScrollDown){
+                    listState.animateScrollToItem(viewModel.libraryMsgList.size)
+                    autoScrollDown = false
                 }
             }
-        }
 
+
+            ScrollToBottom(
+                visible = listState.canScrollForward && !viewModel.isLoading(),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 8.dp),
+                onClicked = { jumpToBottom = true }
+            )
+
+
+
+        }
 
         UserInput(viewModel = viewModel, listState = { listState }, data = data)
     }
 
+
+    // Coroutine for scrolling to bottom when jumpToBottom is pressed
     LaunchedEffect(jumpToBottom){
         if(jumpToBottom){
             listState.animateScrollToItem(viewModel.libraryMsgList.size)
@@ -290,8 +321,9 @@ fun Conversation(
         }
     }
 
+    // Scroll to new message in non stream mode
     LaunchedEffect(scrollOnNewMessage){
-        if(scrollOnNewMessage && viewModel.libraryMsgList.size > 0){
+        if(scrollOnNewMessage && viewModel.libraryMsgList.size > 0 && viewModel.stream.value){
             listState.animateScrollToItem(viewModel.libraryMsgList.size - 1)
             scrollOnNewMessage = false
         }

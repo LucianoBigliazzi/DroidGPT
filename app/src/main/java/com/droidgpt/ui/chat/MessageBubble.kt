@@ -39,6 +39,7 @@ import com.droidgpt.R
 import com.droidgpt.model.MessageData
 import com.droidgpt.model.TimeFormats
 import com.droidgpt.ui.common.DotsTyping
+import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -46,7 +47,8 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalFoundationApi::class, BetaOpenAI::class)
 @Composable
 fun BubbleOut(
-    messageData: MessageData
+    messageData: MessageData,
+    isHapticEnabled: Boolean
 ){
 
     val haptic = LocalHapticFeedback.current
@@ -90,25 +92,24 @@ fun BubbleOut(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        messageData.chatMessage.content?.let {
-            DisplayContentText(
-                text = it,
-                error = false,
-                isSent = true,
-                clipboardManager = clipboardManager,
-                haptic = haptic
-            )
-        }
+        DisplayContentTextOut(
+            text = messageData.chatMessage.content.toString(),
+            error = false,
+            isSent = true,
+            clipboardManager = clipboardManager,
+            haptic = haptic,
+            isHapticEnabled = isHapticEnabled
+        )
 
         Spacer(modifier = Modifier.height(2.dp))
     }
 }
 
 
-@OptIn(BetaOpenAI::class)
 @Composable
 fun BubbleIn(
-    messageData: MessageData
+    messageData: MessageData,
+    isHapticEnabled: Boolean
 ){
 
     val haptic = LocalHapticFeedback.current
@@ -134,9 +135,6 @@ fun BubbleIn(
         }
     }
 
-    //haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-    println("HAPTIC")
-
     Column (
         modifier = Modifier
             .fillMaxWidth()
@@ -156,30 +154,16 @@ fun BubbleIn(
 
         //resolveText(input = msg.text)
 
-        messageData.chatMessage.content?.let {
-            DisplayContentText(
-                text = it,
-                error = false,
-                isSent = false,
-                clipboardManager = clipboardManager,
-                haptic = haptic
-            )
-        }
+        DisplayContentTextIn(
+            text = messageData.chatMessage.content.toString(),
+            error = false,
+            isSent = false,
+            clipboardManager = clipboardManager,
+            haptic = haptic,
+            isHapticEnabled = isHapticEnabled
+        )
 
         Spacer(modifier = Modifier.height(2.dp))
-
-//        Text(
-//            text = resolveText(text),
-//            textAlign = TextAlign.Start,
-//            fontSize = 16.sp,
-//            modifier = Modifier
-//                .background(
-//                    color = MaterialTheme.colorScheme.primaryContainer,
-//                    shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
-//                )
-//                .padding(16.dp, 8.dp, 16.dp, 8.dp),
-//            color = MaterialTheme.colorScheme.onPrimaryContainer,
-//        )
     }
 }
 
@@ -228,12 +212,13 @@ fun BubbleLoading(){
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DisplayContentText(
+fun DisplayContentTextOut(
     text: String,
     error: Boolean,
     isSent: Boolean,
     clipboardManager: ClipboardManager?,
     haptic: HapticFeedback,
+    isHapticEnabled: Boolean
 ){
 
     Text(
@@ -247,7 +232,7 @@ fun DisplayContentText(
                     outgoingColor = MaterialTheme.colorScheme.primaryContainer,
                     incomingColor = MaterialTheme.colorScheme.secondaryContainer,
                     errorColor =    MaterialTheme.colorScheme.errorContainer),
-                shape = if(isSent) RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp) else RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+                shape = RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
             )
             .padding(16.dp, 8.dp, 16.dp, 8.dp)
             .combinedClickable(
@@ -256,7 +241,49 @@ fun DisplayContentText(
                 onLongClick = {
                     if (clipboardManager != null) {
                         clipboardManager.setPrimaryClip(ClipData.newPlainText("message text", text))
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
+                    }
+                },
+                onClick = {},
+                onDoubleClick = {}
+            ),
+    )
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DisplayContentTextIn(
+    text: String,
+    error: Boolean,
+    isSent: Boolean,
+    clipboardManager: ClipboardManager?,
+    haptic: HapticFeedback,
+    isHapticEnabled: Boolean
+){
+
+    Text(
+        text = text,
+        color = if(!error) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer,
+        modifier = Modifier
+            .background(
+                color = parseColor(
+                    isError =       error,
+                    isSent =        isSent,
+                    outgoingColor = MaterialTheme.colorScheme.primaryContainer,
+                    incomingColor = MaterialTheme.colorScheme.secondaryContainer,
+                    errorColor =    MaterialTheme.colorScheme.errorContainer
+                ),
+                shape = RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+            )
+            .padding(16.dp, 8.dp, 16.dp, 8.dp)
+            .combinedClickable(
+                enabled = true,
+                onLongClickLabel = "bubble long click",
+                onLongClick = {
+                    if (clipboardManager != null) {
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText("message text", text))
+                        performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
                     }
                 },
                 onClick = {},
@@ -289,9 +316,9 @@ fun parseColor(
 fun ChatPreviewIn(){
     MaterialTheme {
         Column {
-            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()))
+            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
 
-            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()))
+            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
         }
     }
 }
@@ -301,7 +328,7 @@ fun ChatPreviewIn(){
 @Composable
 fun ChatPreviewOut(){
     MaterialTheme {
-        BubbleOut(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()))
+        BubbleOut(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
     }
 }
 

@@ -2,6 +2,12 @@ package com.droidgpt.ui.composables
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -26,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -45,6 +52,8 @@ import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.ClearChatDialog
 import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.TopBarTitle
+import com.droidgpt.ui.common.initialOffset
+import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 
@@ -137,33 +146,15 @@ fun ActionBar(
 
         actions = {
 
-//            Switch(
-//                modifier = Modifier.padding(end = 8.dp),
-//                checked = viewModel.currentCompletion.value,
-//                onCheckedChange = {
-//                    viewModel.currentCompletion.value = !viewModel.currentCompletion.value
-//                    viewModel.clearList()
-//                }
-//            )
 
-
-            if(viewModel.libraryMsgList.size > 1){
-                IconButton(onClick = {
-
-                    if(viewModel.libraryMsgList.isNotEmpty()){
-                        if(viewModel.libraryMsgList[viewModel.libraryMsgList.size - 1].chatMessage.role != ChatRole.Function){
-                            clearChat = true
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }else{
-                            Toast.makeText(context, "Wait for the reply", Toast.LENGTH_SHORT).show()
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-                    }
-
-                }) {
-                    Icon(Icons.Outlined.Delete, stringResource(R.string.new_chat))
-                }
-            }
+            ClearButton(
+                context = context,
+                clearChat = { clearChat = true },
+                msgListSize = viewModel.libraryMsgList.size,
+                isLoading = viewModel.isLoading(),
+                haptic = haptic,
+                isHapticEnabled = viewModel.isHapticEnabled.value
+            )
 
             IconButton(onClick = {
                 goToSettings = true
@@ -196,7 +187,7 @@ fun ActionBar(
             onConfirm = {
                 clearChat = false
 
-                Toast.makeText(context, "Cleared ${viewModel.libraryMsgList.size} messages", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Cleared ${viewModel.libraryMsgList.size - 1} messages", Toast.LENGTH_SHORT).show()
                 viewModel.clearList()
             }
         )
@@ -204,6 +195,40 @@ fun ActionBar(
 
     LaunchedEffect(viewModel.connectionEstablished){
         connectionMark = viewModel.connectionEstablished
+    }
+}
+
+
+@Composable
+fun ClearButton(
+    context: Context,
+    clearChat: () -> Unit,
+    msgListSize: Int,
+    isLoading: Boolean,
+    haptic: HapticFeedback,
+    isHapticEnabled: Boolean,
+){
+
+    IconButton(onClick = {
+
+        if(msgListSize > 0){
+            if(!isLoading){
+                clearChat()
+                performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
+            }else{
+                Toast.makeText(context, "Wait for the reply", Toast.LENGTH_SHORT).show()
+                performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
+            }
+        }
+
+    }) {
+        AnimatedVisibility(
+            visible = msgListSize > 1,
+            enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(tween(175)),
+            exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut(tween(175))
+        ) {
+            Icon(Icons.Outlined.Delete, stringResource(R.string.new_chat))
+        }
     }
 }
 

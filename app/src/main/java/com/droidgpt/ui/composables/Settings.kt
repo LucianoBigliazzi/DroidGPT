@@ -61,6 +61,7 @@ import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.ChangeApiKeyDialog
 import com.droidgpt.ui.common.ShowBehaviourDialog
 import com.droidgpt.ui.common.TemperatureDialog
+import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 
@@ -178,6 +179,19 @@ fun SettingsContent(
             check = viewModel.stream.value
         )
 
+        SettingsParagraphTitle(title = "General")
+
+        SwitchSettingsItem(
+            title = "Haptic feedback",
+            subtitle = "Enable vibration when action is performed",
+            icon = painterResource(id = R.drawable.vibration),
+            onCheck = {
+                viewModel.isHapticEnabled.value = it
+                data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.HAPTIC, it)
+            },
+            check = viewModel.isHapticEnabled.value
+        )
+
 
         SettingsParagraphTitle(title = "Theme")
 
@@ -259,20 +273,10 @@ fun SettingsContent(
 
 
         SettingsParagraphTitle(title = "About")
-        About(modifier = Modifier.padding(20.dp, 1.dp, 20.dp, 1.dp))
-
-
-
-//        SwitchSettingsItem(
-//            title = "Use GPT-4",
-//            subtitle = "Only if you have a paid subscription",
-//            icon = Icons.TwoTone.Star,
-//            onCheck = {
-//                gpt4 = true
-//                data.saveStringToSharedPreferences("settings", "engine", "gpt-4")
-//                clearChat(viewModel, context, data)
-//            }
-//        )
+        About(
+            modifier = Modifier.padding(20.dp, 1.dp, 20.dp, 1.dp),
+            isHapticEnabled = viewModel.isHapticEnabled.value
+        )
     }
 
 
@@ -336,7 +340,7 @@ fun SettingsContent(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun About(modifier: Modifier){
+fun About(modifier: Modifier, isHapticEnabled: Boolean){
 
     val context = LocalContext.current
     val clipboardManager = ContextCompat.getSystemService(context, ClipboardManager::class.java)
@@ -367,7 +371,7 @@ fun About(modifier: Modifier){
             onLongClick = {
                 if (clipboardManager != null) {
                     clipboardManager.setPrimaryClip(ClipData.newPlainText("secret code", secret))
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
                 }
             },
             onClick = {},

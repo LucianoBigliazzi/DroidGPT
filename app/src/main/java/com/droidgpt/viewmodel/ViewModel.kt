@@ -25,6 +25,7 @@ import com.droidgpt.data.Data
 import com.droidgpt.data.labels.DataLabels
 import com.droidgpt.data.labels.SettingsLabels
 import com.droidgpt.model.MessageData
+import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -36,7 +37,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(BetaOpenAI::class)
 class ChatViewModel(data: Data) : ViewModel() {
 
     private var key = mutableStateOf("")
@@ -58,6 +58,7 @@ class ChatViewModel(data: Data) : ViewModel() {
     var libraryMsgList = mutableStateListOf<MessageData>()
     private val completionFlow : CompletionFlow
     var stream = mutableStateOf(true)
+    var isHapticEnabled = mutableStateOf(true)
 
     init {
         this.data = data
@@ -74,7 +75,6 @@ class ChatViewModel(data: Data) : ViewModel() {
    // var completionList = mutableStateListOf<ChatCompletion>()
 
 
-    @OptIn(BetaOpenAI::class)
     suspend fun apiCallUsingLibrary(input: String): ChatCompletion {
 
         loading.value = true
@@ -101,7 +101,7 @@ class ChatViewModel(data: Data) : ViewModel() {
         return completion
     }
 
-    suspend fun chunkCompletion(input: String) {
+    suspend fun chunkCompletion(input: String, haptic: HapticFeedback) {
 
         loading.value = true
 
@@ -125,6 +125,8 @@ class ChatViewModel(data: Data) : ViewModel() {
             text.append(textChunk)
             println(text)
 
+            performHapticFeedbackIfEnabled(haptic, isHapticEnabled.value, HapticFeedbackType.TextHandleMove)
+
 
             for(c in textChunk){
                 delay(5)
@@ -143,10 +145,11 @@ class ChatViewModel(data: Data) : ViewModel() {
 
         loading.value = false
 
+        performHapticFeedbackIfEnabled(haptic, isHapticEnabled.value, HapticFeedbackType.LongPress)
+
     }
 
 
-    @OptIn(BetaOpenAI::class)
     private fun startLoadingBubble(){
         libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.Function, content = "", name = "loading"), null))
     }
@@ -155,7 +158,6 @@ class ChatViewModel(data: Data) : ViewModel() {
         libraryMsgList.removeLast()
     }
 
-    @OptIn(BetaOpenAI::class)
     fun setSystemMessage(text : String){
         data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR, text)
         libraryMsgList.clear()

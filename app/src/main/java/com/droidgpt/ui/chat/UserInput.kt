@@ -1,6 +1,12 @@
 package com.droidgpt.ui.chat
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -55,6 +61,7 @@ import com.droidgpt.R
 import com.droidgpt.data.Data
 import com.droidgpt.model.ApiReply
 import com.droidgpt.model.ChatMessage
+import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.theme.DroidGPTTheme
 import kotlinx.coroutines.launch
@@ -138,15 +145,18 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
                 )
             )
 
-            if(msg.length > 1){
-
-                // Button to clear the current input in the TextField
-                IconButton(
-                    onClick = {
-                        msg = ""
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    },
-                    modifier = Modifier.padding(end = 8.dp)
+            // Button to clear the current input in the TextField
+            IconButton(
+                onClick = {
+                    msg = ""
+                    performHapticFeedbackIfEnabled(haptic, viewModel.isHapticEnabled.value, HapticFeedbackType.LongPress)
+                },
+                modifier = Modifier.padding(end = 8.dp)
+            ) {
+                AnimatedVisibility(
+                    visible = msg.length > 1,
+                    enter = slideInHorizontally() + fadeIn(tween(175)),
+                    exit = slideOutHorizontally() + fadeOut(tween(175))
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.backspace),
@@ -161,30 +171,20 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        var completion : ChatCompletion
-
         Box (
             modifier = Modifier.align(Alignment.CenterVertically)
         ) {
             IconButton(
                 enabled = msg.isNotBlank() && !viewModel.isLoading(),
                 onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    performHapticFeedbackIfEnabled(haptic, viewModel.isHapticEnabled.value, HapticFeedbackType.LongPress)
                     msg = msg.trim()
                     callback()
-//                        viewModel.performApiCall(
-//                            question = msg,
-//                            data = data,
-//                            context = context,
-//                            haptic = haptic,
-//                            view = view
-//                        )
-
 
                     scope.launch {
                         println("MESSAGE: $msg")
                         if(viewModel.stream.value)
-                            viewModel.chunkCompletion(msg)
+                            viewModel.chunkCompletion(msg, haptic)
                         else
                             viewModel.apiCallUsingLibrary(msg)
                     }
