@@ -1,13 +1,20 @@
 package com.droidgpt.model;
 
 import com.aallam.openai.api.chat.ChatMessage;
+import com.droidgpt.data.LocalDateTimeAdapter;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class MessageData implements Serializable {
 
+    @SerializedName("messageData")
     private ChatMessage chatMessage;
+
+    @SerializedName("time")
+    @JsonAdapter(LocalDateTimeAdapter.class)
     private LocalDateTime localDateTime;
 
 
