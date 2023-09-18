@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,7 @@ import com.droidgpt.ui.common.TemperatureDialog
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -87,11 +89,14 @@ fun SettingsScreen(
 @Composable
 fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: ChatViewModel) {
 
+    var pop by remember {
+        mutableStateOf(false)
+    }
 
     Scaffold (
         topBar = { LargeTopAppBar(title = { Text(text = "Settings", style = MaterialTheme.typography.displaySmall) },
             navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = { pop = true }) {
                     Icon(Icons.TwoTone.ArrowBack, null)
                 }
             },
@@ -100,6 +105,14 @@ fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: Ch
         content = { paddingValues -> SettingsContent(paddingValues, data, viewModel) },
         containerColor = parseSurfaceColor(viewModel = viewModel)
     )
+
+    LaunchedEffect(pop){
+        if(pop){
+            delay(50)
+            pop = false
+            navController.popBackStack()
+        }
+    }
 
 
 }

@@ -10,7 +10,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
@@ -22,23 +24,42 @@ import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.ProxyConfig
+import com.droidgpt.data.Conversation
+import com.droidgpt.data.ConversationDao
+import com.droidgpt.data.ConversationEvent
+import com.droidgpt.data.ConversationRepository
+import com.droidgpt.data.ConversationState
 import com.droidgpt.data.Data
+import com.droidgpt.data.SerializedConversation
+import com.droidgpt.data.SortType
 import com.droidgpt.data.labels.DataLabels
 import com.droidgpt.data.labels.SettingsLabels
+import com.droidgpt.data.serializeMessageDataList
 import com.droidgpt.model.MessageData
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
+import com.droidgpt.ui.composables.takeTitle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.math.sin
 import kotlin.time.Duration.Companion.seconds
 
-class ChatViewModel(data: Data) : ViewModel() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() {
 
     private var key = mutableStateOf("")
     private var msgCount = 0
@@ -60,6 +81,9 @@ class ChatViewModel(data: Data) : ViewModel() {
     private val completionFlow : CompletionFlow
     var stream = mutableStateOf(true)
     var isHapticEnabled = mutableStateOf(true)
+    val conversationDao : ConversationDao
+    val conversationsList = mutableStateListOf<Conversation>()
+    val repository : ConversationRepository
 
     init {
         this.data = data
@@ -69,18 +93,133 @@ class ChatViewModel(data: Data) : ViewModel() {
             timeout = Timeout(socket = 120.seconds)
         )
         openAI = OpenAI(config = config)
-        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), null))
+        addToLibraryList(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), LocalDateTime.now()))
         this.completionFlow = CompletionFlow(openAI)
+        this.conversationDao = conversationDao
+        this.repository = ConversationRepository(conversationDao)
     }
 
-   // var completionList = mutableStateListOf<ChatCompletion>()
+    //val allConversations : LiveData<List<Conversation>> = repository.allConversations.asLiveData()
 
+    // Database
+    private val _sortType = MutableStateFlow(SortType.ID)
+    private val _conversations = _sortType
+        .flatMapLatest { sortType ->
+            when(sortType){
+                SortType.ID -> conversationDao.getAllConversations()
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    private val _state = MutableStateFlow(ConversationState())
+
+    val state = combine(_state, _sortType, _conversations) { state, sortType, conversations ->
+        state.copy(
+            conversations = conversations,
+            sortType = sortType,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConversationState())
+
+
+    fun updateConversationsList(conversation: Conversation){
+        conversationsList.add(conversation)
+    }
+
+
+    fun onEvent(event: ConversationEvent){
+        when(event){
+            ConversationEvent.SaveConversation -> {
+                val creationDate    = state.value.creationDate
+                val title           = state.value.title
+                val id              = state.value.id
+                val messageDataList = state.value.messageDataList
+
+                if(messageDataList.isEmpty() || title.isBlank())
+                    return
+
+                val conversation = Conversation(
+                    creationDate = creationDate,
+                    title = title,
+                    id = id,
+                    messagesList = messageDataList
+                )
+
+                viewModelScope.launch {
+                    conversationDao.upsertConversation(conversation = conversation)
+                }
+
+                _state.update {
+                    it.copy(
+                        creationDate = LocalDate.now(),
+                        title = "",
+                        messageDataList = emptyList()
+                    )
+                }
+
+            }
+            is ConversationEvent.DeleteConversation -> {
+                viewModelScope.launch {
+                    conversationDao.deleteConversation(conversation = event.conversation)
+                }
+            }
+
+            is ConversationEvent.SetCreationDate -> {
+                _state.update { it.copy(creationDate = event.localDate) }
+            }
+            is ConversationEvent.SetTitle -> {
+                _state.update { it.copy(title = event.title) }
+            }
+            is ConversationEvent.SetID -> {
+                _state.update { it.copy(id = event.id) }
+            }
+            is ConversationEvent.SetMessageDataList -> {
+                _state.update { it.copy(messageDataList = event.messageDataList) }
+            }
+
+            is ConversationEvent.SortConversations -> {
+                _sortType.value = event.sortType
+            }
+        }
+    }
+
+    fun addToLibraryList(messageData: MessageData){
+        libraryMsgList.add(messageData)
+        //onEvent(ConversationEvent.SetMessageDataList(libraryMsgList.toList()))
+    }
+
+    suspend fun generateTitle() : String {
+
+        val chatCompletionRequest = ChatCompletionRequest(
+            model = ModelId("gpt-3.5-turbo"),
+            messages = libraryMsgList.map { it.chatMessage },
+            temperature = 0.1
+        )
+
+        val completion = openAI.chatCompletion(chatCompletionRequest)
+
+        return completion.choices[0].message.content.toString()
+    }
 
     suspend fun apiCallUsingLibrary(input: String): ChatCompletion {
 
         loading.value = true
 
-        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.User, content = input), LocalDateTime.now()))
+        val messageData = MessageData(ChatMessage(role = ChatRole.User, content = input), LocalDateTime.now())
+
+        onEvent(ConversationEvent.SetCreationDate(LocalDate.now()))
+
+        addToLibraryList(messageData)
+
+        val singleMessageRange = 4  // if list size > 4 then don't make a new title
+        // Idk why i need to set the title even if I continue a previous conversation
+        if(libraryMsgList.size < singleMessageRange) {
+            onEvent(ConversationEvent.SetCreationDate(LocalDate.now()))
+            onEvent(ConversationEvent.SetTitle(takeTitle(messageData.chatMessage.content.toString())))
+        }
+        else {
+            onEvent(ConversationEvent.SetCreationDate(libraryMsgList.toList()[1].messageTime.toLocalDate()))
+            onEvent(ConversationEvent.SetTitle(takeTitle(libraryMsgList.toList()[1].chatMessage.content.toString())))
+        }
 
         startLoadingBubble()
 
@@ -95,7 +234,7 @@ class ChatViewModel(data: Data) : ViewModel() {
         stopLoadingBubble()
 
         //completionList.add(completion)
-        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.Assistant, content = completion.choices[0].message?.content), LocalDateTime.now()))
+        addToLibraryList(MessageData(ChatMessage(role = ChatRole.Assistant, content = completion.choices[0].message?.content), LocalDateTime.now()))
 
         loading.value = false
 
@@ -106,7 +245,24 @@ class ChatViewModel(data: Data) : ViewModel() {
 
         loading.value = true
 
-        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.User, content = input), LocalDateTime.now()))
+        val messageData = MessageData(ChatMessage(role = ChatRole.User, content = input), LocalDateTime.now())
+
+        onEvent(ConversationEvent.SetCreationDate(LocalDate.now()))
+
+        addToLibraryList(messageData)
+
+        val singleMessageRange = 4  // if list size > 4 then don't make a new title
+        // Idk why i need to set the title even if I continue a previous conversation
+        if(libraryMsgList.size < singleMessageRange) {
+            onEvent(ConversationEvent.SetCreationDate(LocalDate.now()))
+            onEvent(ConversationEvent.SetTitle(takeTitle(messageData.chatMessage.content.toString())))
+        }
+        else {
+            onEvent(ConversationEvent.SetCreationDate(libraryMsgList.toList()[1].messageTime.toLocalDate()))
+            onEvent(ConversationEvent.SetTitle(takeTitle(libraryMsgList.toList()[1].chatMessage.content.toString())))
+        }
+
+
 
         val chatCompletionRequest = ChatCompletionRequest(
             model = ModelId("gpt-3.5-turbo"),
@@ -144,6 +300,8 @@ class ChatViewModel(data: Data) : ViewModel() {
 
         }
 
+        onEvent(ConversationEvent.SetMessageDataList(libraryMsgList.toList()))
+
         loading.value = false
 
         performHapticFeedbackIfEnabled(haptic, isHapticEnabled.value, HapticFeedbackType.LongPress)
@@ -162,7 +320,7 @@ class ChatViewModel(data: Data) : ViewModel() {
     fun setSystemMessage(text : String){
         data.saveStringToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR, text)
         libraryMsgList.clear()
-        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = text), null))
+        addToLibraryList(MessageData(ChatMessage(role = ChatRole.System, content = text), LocalDateTime.now()))
     }
 
     fun changeAPIKey(key : String){
@@ -214,7 +372,7 @@ class ChatViewModel(data: Data) : ViewModel() {
 
     fun clearList(){
         libraryMsgList.clear()
-        libraryMsgList.add(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), null))
+        addToLibraryList(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), LocalDateTime.now()))
         msgCount = 0
         clearChatButton.value = false
     }

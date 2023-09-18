@@ -1,6 +1,5 @@
 package com.droidgpt.ui.chat
 
-import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -38,52 +37,50 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.aallam.openai.api.BetaOpenAI
-import com.aallam.openai.api.chat.ChatCompletion
+import androidx.room.Room
 import com.droidgpt.R
+import com.droidgpt.data.ConversationDatabase
 import com.droidgpt.data.Data
-import com.droidgpt.model.ApiReply
-import com.droidgpt.model.ChatMessage
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.theme.DroidGPTTheme
+import kotlinx.coroutines.android.awaitFrame
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 const val titleInput = "Generate a title for this conversation. It must be short, maximum 4 words. No punctuation, translate in the language of the first message sent."
 
-@OptIn(ExperimentalComposeUiApi::class, BetaOpenAI::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Data){
-
-    val context = LocalContext.current
+fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState){
 
     var msg by remember {
         mutableStateOf("")
     }
 
-    var loading by remember {
-        mutableStateOf(false)
-    }
 
     val haptic = LocalHapticFeedback.current
-    val view = LocalView.current
     LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     rememberCoroutineScope()
@@ -91,6 +88,10 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
     val callback = {
         focusManager.clearFocus()
     }
+
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val windowInfo = LocalWindowInfo.current
 
     var closeKeyboard by remember {
         mutableStateOf(false)
@@ -102,11 +103,8 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
 
     val scope = rememberCoroutineScope()
 
-    var timeOut : Long
-    var timeIn : Long
-
     Row (
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Bottom,
         modifier = Modifier
             .navigationBarsPadding()
             .imePadding()
@@ -127,7 +125,9 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
                 value = msg,
                 onValueChange = {text -> msg = text},
                 placeholder = { Text(text = "Enter message", color = MaterialTheme.colorScheme.onSurfaceVariant) },      //Replaces label
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester),
                 shape = RoundedCornerShape(32.dp),
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
@@ -151,7 +151,8 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
                     msg = ""
                     performHapticFeedbackIfEnabled(haptic, viewModel.isHapticEnabled.value, HapticFeedbackType.LongPress)
                 },
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = 8.dp),
+                enabled = msg.length > 1
             ) {
                 AnimatedVisibility(
                     visible = msg.length > 1,
@@ -224,46 +225,18 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState, data: Da
             viewModel.setGenerateCompletion(false)
         }
 
-
-
-    var check by remember {
-        mutableStateOf(false)
-    }
-    var text by remember {
-        mutableStateOf("")
-    }
-
-//    LaunchedEffect(generateTitle){
-//
-//
-//        if(generateTitle){
-//            withContext(Dispatchers.IO){
-//                data.titleGeneration(titleInput) {reply ->
-//                    if(reply != null && !reply.error){
-//                        check = true
-//                        text = reply.text
-//                    }
-//                }
-//
-//                //data.removeTitleQuestionFromJson(context, viewModel.getMsgCount())
+    LaunchedEffect(windowInfo){
+//        snapshotFlow { windowInfo.isWindowFocused }.collect {isWindowFocused ->
+//            if(isWindowFocused) {
+//                delay(100)
+//                focusRequester.requestFocus()
 //            }
-//
-//            generateTitle = false
 //        }
-//
-//
-//        // Animation for title: print char one by one like chatgpt style (stream not developed yet)
-//        if(check){
-//            viewModel.setChatTitle("")
-//            for(c in text){
-//                delay(50)
-//                viewModel.setChatTitle(viewModel.getChatTitle().plus(c))
-//            }
-//            check = false
-//        }
-//    }
 
-
+        awaitFrame()
+        delay(100)
+        focusRequester.requestFocus()
+    }
 
 
 }
@@ -276,9 +249,10 @@ fun UserInputPreview(){
     val context = LocalContext.current
     val state = rememberLazyListState()
     val data = Data(context)
-    val viewModel = ChatViewModel(data)
+    val db = Room.databaseBuilder(context, ConversationDatabase::class.java, "conversation.db").build()
+    val viewModel = ChatViewModel(data, db.dao)
 
     DroidGPTTheme {
-        UserInput(viewModel = viewModel, { state }, data = data)
+        UserInput(viewModel = viewModel) { state }
     }
 }

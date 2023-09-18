@@ -10,7 +10,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -20,7 +19,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -30,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedback
@@ -41,29 +40,32 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.aallam.openai.api.BetaOpenAI
-import com.aallam.openai.api.chat.ChatRole
 import com.droidgpt.R
+import com.droidgpt.data.ConversationEvent
 import com.droidgpt.data.Data
 import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.ClearChatDialog
 import com.droidgpt.ui.common.Route
 import com.droidgpt.ui.common.TopBarTitle
-import com.droidgpt.ui.common.initialOffset
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
+import kotlinx.coroutines.delay
+import com.droidgpt.data.Conversation
+import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class, BetaOpenAI::class)
 @Composable
 fun ActionBar(
     viewModel: ChatViewModel,
-    navController: NavHostController,
-    data: Data
+    navController: NavHostController
 ) {
 
     val context = LocalContext.current
@@ -116,11 +118,6 @@ fun ActionBar(
 
     println("TOP APP BAR RECOMPOSED")
 
-    var switchCompletionExpanded by remember {
-        mutableStateOf(false)
-    }
-
-
 
     TopAppBar(
         title = {
@@ -171,13 +168,17 @@ fun ActionBar(
     )
 
     LaunchedEffect(goToSettings){
-        if(goToSettings)
+        if(goToSettings) {
+            delay(50)
             navController.navigate(Route.SETTINGS)
+        }
     }
 
     LaunchedEffect(goToChatHistory){
-        if(goToChatHistory)
+        if(goToChatHistory) {
+            delay(50)
             navController.navigate(Route.HISTORY)
+        }
     }
 
 
@@ -187,6 +188,9 @@ fun ActionBar(
             onConfirm = {
                 clearChat = false
 
+                //viewModel.onEvent(ConversationEvent.SetTitle("title"))
+                viewModel.onEvent(ConversationEvent.SetMessageDataList(viewModel.libraryMsgList.toList()))
+                viewModel.onEvent(ConversationEvent.SaveConversation)
                 Toast.makeText(context, "Cleared ${viewModel.libraryMsgList.size - 1} messages", Toast.LENGTH_SHORT).show()
                 viewModel.clearList()
             }
@@ -209,19 +213,22 @@ fun ClearButton(
     isHapticEnabled: Boolean,
 ){
 
-    IconButton(onClick = {
+    IconButton(
+        onClick = {
 
-        if(msgListSize > 0){
-            if(!isLoading){
-                clearChat()
-                performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
-            }else{
-                Toast.makeText(context, "Wait for the reply", Toast.LENGTH_SHORT).show()
-                performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
+            if(msgListSize > 0){
+                if(!isLoading){
+                    clearChat()
+                    performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
+                }else{
+                    Toast.makeText(context, "Wait for the reply", Toast.LENGTH_SHORT).show()
+                    performHapticFeedbackIfEnabled(haptic, isHapticEnabled, HapticFeedbackType.LongPress)
+                }
             }
-        }
 
-    }) {
+        },
+       enabled = !isLoading && msgListSize > 1
+    ) {
         AnimatedVisibility(
             visible = msgListSize > 1,
             enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(tween(175)),
@@ -241,6 +248,6 @@ fun TopBarPreview(){
     val data = Data(LocalContext.current)
 
     DroidGPTTheme {
-        ActionBar(viewModel = viewModel, navController = navController, data = data)
+        ActionBar(viewModel = viewModel, navController = navController)
     }
 }

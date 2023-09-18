@@ -6,10 +6,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
+import com.droidgpt.data.ConversationDatabase
 import com.droidgpt.data.Data
 import com.droidgpt.data.labels.SettingsLabels
 import com.droidgpt.viewmodel.ChatViewModel
@@ -40,7 +44,15 @@ fun AppNavigation(window: Window) {
 
     val context = LocalContext.current
     val data = Data(context)
-    val viewModel : ChatViewModel = viewModel(factory = ChatViewModelFactory(data = data))
+    val database by lazy {
+        Room.databaseBuilder(
+            context = context,
+            ConversationDatabase::class.java,
+            "conversations.db"
+        ).build()
+    }
+    val viewModel : ChatViewModel = viewModel(factory = ChatViewModelFactory(data = data, conversationDao = database.dao))
+    val state by viewModel.state.collectAsState()
     val navController = rememberNavController()
 
     val startDestination : String
@@ -62,7 +74,6 @@ fun AppNavigation(window: Window) {
 
     NavHost(navController = navController, startDestination = startDestination) {
         animatedComposable(Route.MAIN) {
-            //init(context)
             MainScreen(navController = navController, window = window, data = data, viewModel = viewModel)
         }
         animatedComposable(Route.SETTINGS){
@@ -72,7 +83,7 @@ fun AppNavigation(window: Window) {
             Login(navController = navController, viewModel, window)
         }
         animatedComposable(Route.HISTORY){
-            ChatHistory(navController = navController, viewModel = viewModel, data = data)
+            ChatHistory(navController = navController, viewModel = viewModel, conversationState = state)
         }
     }
 }

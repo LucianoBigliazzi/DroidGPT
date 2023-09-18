@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
+import com.droidgpt.data.ConversationDatabase
 import com.droidgpt.data.Data
 import com.droidgpt.data.KeyManager
 import com.droidgpt.data.labels.SettingsLabels
@@ -264,7 +266,8 @@ fun ClickableHyperlink() {
 fun LoginPreview(){
 
     val navController = rememberNavController()
-    val viewModel = ChatViewModel(Data(LocalContext.current))
+    val db = Room.databaseBuilder(LocalContext.current, ConversationDatabase::class.java, "conversation.db").build()
+    val viewModel = ChatViewModel(Data(LocalContext.current), db.dao)
 
     DroidGPTTheme {
         LoginScreen(navController = navController, viewModel = viewModel)
