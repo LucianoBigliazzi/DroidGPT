@@ -16,13 +16,16 @@ moment, while doing some web researches, I met Jetpack Compose and I tried it, t
 ### Material3 and MaterialYou 
 This app is recommended for the latest Android releases (currently I am using Android 13). The app works on older devices but I did not refine the app for older models too, maybe in some future.
 
+### Room database
+Conversations are stored in database when cleared, they can be continued later.
+
 ### Custom API implementation (no more)
 I started this project coding my own OpenAI's API implementation, but later i switched to the prebuilt openai-kotlin client by aallam.
 
-### Change the "System message"
+### Change "System message"
 System message defines the behaviour the chatbot should have throughout the conversation
 
-### Change the temperature
+### Change temperature
 The temperature is the level of randomness and unpredictability of the chabot's replies: the higher the value, the more creative it'll be.
 
 ### Stream mode
