@@ -24,8 +24,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Send
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -190,13 +194,15 @@ fun UserInput(viewModel: ChatViewModel, listState: () -> LazyListState){
                             viewModel.apiCallUsingLibrary(msg)
                     }
                     //msg = ""    // Since I included a backspace button, I may remove this line
-                }
-
+                },
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                if(msg.isNotBlank() && !viewModel.isLoading())
-                    Icon(Icons.Outlined.Send, null, tint = MaterialTheme.colorScheme.primary)
-                else
-                    Icon(Icons.Outlined.Send, null)
+                Icon(
+                    imageVector = Icons.Outlined.Send,
+                    contentDescription = null
+                )
             }
         }
 
