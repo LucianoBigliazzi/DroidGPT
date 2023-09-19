@@ -98,7 +98,8 @@ fun MainScreen(
 
     DroidGPTTheme (
         darkTheme = if(viewModel.isSystemTheme()) isSystemInDarkTheme() else viewModel.isDarkTheme(),
-        isHighContrastModeEnabled = viewModel.highContrast.value
+        isHighContrastModeEnabled = viewModel.highContrast.value,
+        dynamicColor = viewModel.dynamic.value
     ) {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -148,7 +149,7 @@ fun ScaffoldTest(navController: NavHostController, data: Data, viewModel: ChatVi
             Conversation(paddingValues = paddingValues, viewModel, data = data)
         },
 
-        containerColor = parseSurfaceColor(viewModel = viewModel),
+        containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value),
 
         snackbarHost = {
             SnackbarHost (snackbarHostState) { data ->

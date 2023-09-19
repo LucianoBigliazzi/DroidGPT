@@ -2,6 +2,7 @@ package com.droidgpt.ui.composables
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,10 +20,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
@@ -37,8 +38,11 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,17 +55,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import androidx.room.Room
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.droidgpt.R
+import com.droidgpt.data.ConversationDao
+import com.droidgpt.data.ConversationDatabase
 import com.droidgpt.data.ConversationEvent
 import com.droidgpt.data.ConversationState
 import com.droidgpt.data.ConversationUpdate
@@ -71,8 +84,11 @@ import com.droidgpt.ui.chat.BubbleIn
 import com.droidgpt.ui.chat.BubbleOut
 import com.droidgpt.ui.common.ChangePropertyDialog
 import com.droidgpt.ui.common.ChatHistoryLazyListItem
+import com.droidgpt.ui.theme.DroidGPTTheme
+import com.droidgpt.ui.theme.parseSurfaceColor
 import com.droidgpt.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 import java.time.LocalDateTime
 
 
@@ -83,25 +99,34 @@ fun ChatHistory(navController: NavHostController, viewModel: ChatViewModel, conv
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState)
     
-    Scaffold (
-        contentWindowInsets = ScaffoldDefaults
-            .contentWindowInsets
-            .exclude(WindowInsets.navigationBars)
-            .exclude(WindowInsets.ime),
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { TopAppBar(
-            title = { Text(text = "History", style = MaterialTheme.typography.titleLarge) },
-            navigationIcon = {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    content = { Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(id = R.string.back)) }
-                )
-            }
-        )},
-        content = {paddingValues ->
-            ChatHistoryContent(paddingValues, viewModel, navController, conversationState)
-        }
-    )
+    DroidGPTTheme (
+        darkTheme = if(viewModel.isSystemTheme()) isSystemInDarkTheme() else viewModel.isDarkTheme(),
+        isHighContrastModeEnabled = viewModel.isHighContrast(),
+        dynamicColor = viewModel.dynamic.value
+    ) {
+        Scaffold (
+            contentWindowInsets = ScaffoldDefaults
+                .contentWindowInsets
+                .exclude(WindowInsets.navigationBars)
+                .exclude(WindowInsets.ime),
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = { TopAppBar(
+                title = { Text(text = "History", style = MaterialTheme.typography.titleLarge) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        content = { Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(id = R.string.back)) }
+                    )
+                },
+                colors = topAppBarColors(containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value))
+            )},
+            content = {paddingValues ->
+                ChatHistoryContent(paddingValues, viewModel, navController, conversationState)
+            },
+            containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value)
+
+        )
+    }
 }
 
 @Composable
@@ -193,13 +218,14 @@ fun ChatHistoryContent(
                             viewModel.clearList()
                     },
                     onLongClick = {
-                        showConversationPreview = true
                         currentIndex = index
+                        currentID = conversation.id
+                        currentTitle = conversation.title
+                        showConversationPreview = true
                         currentList.clear()
                         conversation.messagesList.forEach {
                             currentList.add(it)
                         }
-                        currentTitle = conversation.title
                     },
                     onClick = {
                         viewModel.libraryMsgList.clear()
@@ -217,6 +243,8 @@ fun ChatHistoryContent(
 
     if(showConversationPreview){
         ShowConversationPreviewDialog(
+            id = currentID,
+            dao = viewModel.conversationDao,
             onDismiss = { showConversationPreview = false },
             onConfirm = {
                 viewModel.libraryMsgList.clear()
@@ -225,7 +253,6 @@ fun ChatHistoryContent(
                 }
                 navController.popBackStack()
             },
-            editTitle = {  },
             conversationTitle = currentTitle,
             list = currentList
         )
@@ -285,9 +312,11 @@ fun ChatHistoryContent(
 
 @Composable
 fun ShowConversationPreviewDialog(
+    id: Int,
+    dao: ConversationDao,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    editTitle: () -> Unit,
     conversationTitle: String,
     list: List<MessageData>
 ) {
@@ -296,9 +325,9 @@ fun ShowConversationPreviewDialog(
         onDismissRequest = onDismiss,
         confirmButton = { ConfirmButton(onClick = onConfirm) },
         dismissButton = { DismissButton(onClick = onDismiss)},
-        title = { AlertDialogTitle(conversationTitle, list.size - 1, onClick = editTitle) },
+        title = { AlertDialogTitle(id = id, dao = dao, conversationTitle, list.size - 1) },
         text = { PreviewContent(list = list) },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(32.dp),
         properties = DialogProperties(
@@ -309,10 +338,21 @@ fun ShowConversationPreviewDialog(
 
 @Composable
 fun AlertDialogTitle(
+    id: Int,
+    dao: ConversationDao,
     conversationTitle: String,
-    size: Int,
-    onClick: () -> Unit
+    size: Int
 ) {
+
+    var customTitle by remember {
+        mutableStateOf(TextFieldValue(
+            text = conversationTitle,
+            selection = TextRange(conversationTitle.length)
+        ))
+    }
+    val scope = rememberCoroutineScope()
+    val focusRequester = FocusRequester()
+    val focusManager = LocalFocusManager.current
 
     Row (
         verticalAlignment = Alignment.CenterVertically
@@ -320,13 +360,39 @@ fun AlertDialogTitle(
         Column (
             modifier = Modifier.weight(1f)
         ) {
-            Text(
-                text = conversationTitle,
-                style = MaterialTheme.typography.titleMedium
+
+            TextField(
+                value = customTitle,
+                onValueChange = {
+                    customTitle = TextFieldValue(text = it.text, selection = it.selection)
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    scope.launch {
+                        dao.updateTitle(ConversationUpdate(id = id, title = customTitle.text.trim()))
+                    }
+                    focusManager.clearFocus()
+                }),
+                modifier = Modifier.focusRequester(focusRequester),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                )
             )
-            Text(text = msgNum(size), style = MaterialTheme.typography.bodyMedium)
+
+            Text(
+                text = msgNum(size),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(start = 16.dp)
+            )
         }
-        IconButton(onClick = onClick) {
+        IconButton(
+            onClick = {
+                focusRequester.requestFocus()
+            }
+        ) {
             Icon(imageVector = Icons.Outlined.Edit, contentDescription = null)
         }
     }
@@ -419,12 +485,23 @@ fun takeTitle(string: String) : String {
 @Composable
 fun PreviewDialogPreview(){
 
+    val context = LocalContext.current
+    val database by lazy {
+        Room.databaseBuilder(
+            context = context,
+            ConversationDatabase::class.java,
+            "conversations.db"
+        ).build()
+    }
+
     MaterialTheme {
         Surface {
             ShowConversationPreviewDialog(
+                id = 0,
+                dao = database.dao,
+                modifier = Modifier.padding(end = 32.dp),
                 onDismiss = {  },
                 onConfirm = {  },
-                editTitle = {  },
                 conversationTitle = "Title",
                 list = listOf(
                     MessageData(ChatMessage(ChatRole.User, "Ciao come va"), LocalDateTime.now()),

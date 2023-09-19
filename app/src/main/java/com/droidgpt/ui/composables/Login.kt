@@ -77,8 +77,14 @@ fun checkProvidedKey(key : String, context : Context): Boolean {
 @Composable
 fun Login(navController: NavHostController, viewModel: ChatViewModel, window: Window){
 
-    WindowCompat.setDecorFitsSystemWindows(window, false)
-    LoginScreen(navController = navController, viewModel = viewModel)
+    DroidGPTTheme (
+        darkTheme = if(viewModel.isSystemTheme()) isSystemInDarkTheme() else viewModel.isDarkTheme(),
+        isHighContrastModeEnabled = viewModel.highContrast.value,
+        dynamicColor = viewModel.dynamic.value
+    ) {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        LoginScreen(navController = navController, viewModel = viewModel)
+    }
 }
 
 
@@ -93,26 +99,21 @@ fun LoginScreen(navController: NavHostController, viewModel: ChatViewModel) {
 
     var showError by remember { mutableStateOf(false) }
 
-    DroidGPTTheme (
-        darkTheme = if(viewModel.isSystemTheme()) isSystemInDarkTheme() else viewModel.isDarkTheme(),
-        isHighContrastModeEnabled = viewModel.highContrast.value
-    ) {
-        Scaffold (
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    if(checkProvidedKey(viewModel.getKey(), context = context))
-                        goToMain = true
-                    else
-                        showError = true
-                }) {
-                    Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = null)
-                }
-            },
-            modifier = Modifier.imePadding(),
-            containerColor = parseSurfaceColor(viewModel = viewModel)
-        ) { paddingValues ->
-            LoginContent(paddingValues, viewModel, showError)
-        }
+    Scaffold (
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                if(checkProvidedKey(viewModel.getKey(), context = context))
+                    goToMain = true
+                else
+                    showError = true
+            }) {
+                Icon(imageVector = Icons.Outlined.ArrowForward, contentDescription = null)
+            }
+        },
+        modifier = Modifier.imePadding(),
+        containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value)
+    ) { paddingValues ->
+        LoginContent(paddingValues, viewModel, showError)
     }
 
     LaunchedEffect(goToMain){

@@ -333,9 +333,9 @@ public class Data implements Callback {
         sharedPreferences.edit().putBoolean(key, check).apply();
     }
 
-    public Boolean getBooleanFromSharedPreferences(String src, String key, Boolean systemUI){
+    public Boolean getBooleanFromSharedPreferences(String src, String key, Boolean _default){
         SharedPreferences sharedPreferences = context.getSharedPreferences(src, Context.MODE_PRIVATE);
-        return sharedPreferences.getBoolean(key, systemUI);
+        return sharedPreferences.getBoolean(key, _default);
     }
 
 }

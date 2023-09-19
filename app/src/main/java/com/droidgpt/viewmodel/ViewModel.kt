@@ -80,10 +80,11 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
     var libraryMsgList = mutableStateListOf<MessageData>()
     private val completionFlow : CompletionFlow
     var stream = mutableStateOf(true)
+    val dynamic = mutableStateOf(true)
     var isHapticEnabled = mutableStateOf(true)
     val conversationDao : ConversationDao
-    val conversationsList = mutableStateListOf<Conversation>()
-    val repository : ConversationRepository
+    private val conversationsList = mutableStateListOf<Conversation>()
+    private val repository : ConversationRepository
 
     init {
         this.data = data

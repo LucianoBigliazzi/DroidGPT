@@ -90,13 +90,13 @@ fun ChatHistoryLazyListItem(
             }
         }
 
-        Box {
-            IconButton(
-                onClick = onEditTitle
-            ) {
-                Icon(imageVector = Icons.Outlined.Edit, contentDescription = "Edit title")
-            }
-        }
+//        Box {
+//            IconButton(
+//                onClick = onEditTitle
+//            ) {
+//                Icon(imageVector = Icons.Outlined.Edit, contentDescription = "Edit title")
+//            }
+//        }
 
         Box {
             IconButton(

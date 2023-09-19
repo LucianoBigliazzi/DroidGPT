@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.twotone.ArrowBack
 import androidx.compose.material.icons.twotone.Warning
@@ -63,6 +64,7 @@ import com.droidgpt.ui.common.ChangeApiKeyDialog
 import com.droidgpt.ui.common.ShowBehaviourDialog
 import com.droidgpt.ui.common.TemperatureDialog
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
+import com.droidgpt.ui.image
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 import kotlinx.coroutines.delay
@@ -78,7 +80,8 @@ fun SettingsScreen(
 
     DroidGPTTheme (
         darkTheme = if(viewModel.isSystemTheme()) isSystemInDarkTheme() else viewModel.isDarkTheme(),
-        isHighContrastModeEnabled = viewModel.isHighContrast()
+        isHighContrastModeEnabled = viewModel.isHighContrast(),
+        dynamicColor = viewModel.dynamic.value
     ) {
         SettingsScaffold(navController, data, viewModel)
     }
@@ -100,10 +103,10 @@ fun SettingsScaffold(navController: NavHostController, data: Data, viewModel: Ch
                     Icon(Icons.TwoTone.ArrowBack, null)
                 }
             },
-            colors = topAppBarColors(containerColor = parseSurfaceColor(viewModel = viewModel)))
+            colors = topAppBarColors(containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value)))
         },
         content = { paddingValues -> SettingsContent(paddingValues, data, viewModel) },
-        containerColor = parseSurfaceColor(viewModel = viewModel)
+        containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value)
     )
 
     LaunchedEffect(pop){
@@ -157,7 +160,7 @@ fun SettingsContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = paddingValues)
-            .background(color = parseSurfaceColor(viewModel = viewModel))
+            .background(color = parseSurfaceColor(highContrast = viewModel.highContrast.value))
     ) {
 
         SettingsParagraphTitle(title = enginePreferencesText)
@@ -207,6 +210,17 @@ fun SettingsContent(
 
 
         SettingsParagraphTitle(title = "Theme")
+
+        SwitchSettingsItem(
+            title = "Material You",
+            subtitle = "Activate dynamic colors based on your wallpaper",
+            icon = Icons.Filled.FavoriteBorder,
+            onCheck = {
+                viewModel.dynamic.value = it
+                data.saveBooleanToSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DYNAMIC, it)
+            },
+            check = viewModel.dynamic.value
+        )
 
         SwitchSettingsItem(
             title = "System theme",

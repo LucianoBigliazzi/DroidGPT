@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -162,7 +163,7 @@ fun ActionBar(
         colors = TopAppBarDefaults.topAppBarColors(
             //scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-            containerColor = parseSurfaceColor(viewModel = viewModel)
+            containerColor = parseSurfaceColor(highContrast = viewModel.highContrast.value)
         ),
         //scrollBehavior = scrollBehavior
     )
@@ -234,7 +235,7 @@ fun ClearButton(
             enter = slideInHorizontally(initialOffsetX = { it / 2 }) + fadeIn(tween(175)),
             exit = slideOutHorizontally(targetOffsetX = { it / 2 }) + fadeOut(tween(175))
         ) {
-            Icon(Icons.Outlined.Delete, stringResource(R.string.new_chat))
+            Icon(Icons.Outlined.Add, stringResource(R.string.new_chat))
         }
     }
 }
@@ -245,7 +246,6 @@ fun TopBarPreview(){
 
     val viewModel : ChatViewModel = viewModel()
     val navController = rememberNavController()
-    val data = Data(LocalContext.current)
 
     DroidGPTTheme {
         ActionBar(viewModel = viewModel, navController = navController)

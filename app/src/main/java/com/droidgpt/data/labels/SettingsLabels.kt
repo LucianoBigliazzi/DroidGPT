@@ -12,4 +12,5 @@ object SettingsLabels{
     const val SYSTEM_THEME = "sys_theme"
     const val STREAM = "stream"
     const val HAPTIC = "haptic"
+    const val DYNAMIC = "dynamic"
 }

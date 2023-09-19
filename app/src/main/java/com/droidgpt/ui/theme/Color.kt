@@ -19,9 +19,9 @@ val Pink40 = Color(0xFF7D5260)
 
 
 @Composable
-fun parseSurfaceColor(viewModel: ChatViewModel) : Color{
+fun parseSurfaceColor(highContrast: Boolean) : Color{
 
-    return if(isSystemInDarkTheme() && viewModel.highContrast.value) Color.Black
-    else if(isSystemInDarkTheme() && !viewModel.highContrast.value) MaterialTheme.colorScheme.surface
+    return if(isSystemInDarkTheme() && highContrast) Color.Black
+    else if(isSystemInDarkTheme() && !highContrast) MaterialTheme.colorScheme.surface
     else MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
 }

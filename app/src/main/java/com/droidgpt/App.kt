@@ -70,6 +70,7 @@ fun AppNavigation(window: Window) {
     viewModel.setSystemTheme(data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.SYSTEM_THEME, isSystemInDarkTheme()))
     viewModel.stream.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.STREAM, true)
     viewModel.isHapticEnabled.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.HAPTIC, true)
+    viewModel.dynamic.value = data.getBooleanFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.DYNAMIC, true)
     //viewModel.retrieveList(data.getFromSharedPreferences(DataLabels.DATA, DataLabels.HISTORY))
 
     NavHost(navController = navController, startDestination = startDestination) {

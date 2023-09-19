@@ -54,8 +54,8 @@ fun ClearChatDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Clear chat?") },
-        text = { Text("This action cannot be undone") },
+        title = { Text(text = "Clear conversation?") },
+        text = { Text("This conversation will be stored in database, you can check it out later") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(text = "Confirm")
