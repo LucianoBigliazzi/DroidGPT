@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -85,7 +86,12 @@ fun ChatHistoryLazyListItem(
         }
 
         Box {
-            IconButton(onClick = onLongClick) {
+            IconButton(
+                onClick = onLongClick,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
                 Icon(painter = painterResource(R.drawable.preview), contentDescription = null)
             }
         }
@@ -100,7 +106,10 @@ fun ChatHistoryLazyListItem(
 
         Box {
             IconButton(
-                onClick = onDelete
+                onClick = onDelete,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
