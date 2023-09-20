@@ -1,6 +1,8 @@
 # DroidGPT
 DroidGPT is a custom OpenAI API client for Android that provides an easy to use chat interface built with Jetpack Compose.
 
+<img src="https://github.com/LucianoBigliazzi/DroidGPT/blob/master/demogif.gif" width="230" height="500"/>
+
 ## Purpose
 I started this project for two main reasons:
 - I wanted a ChatGPT app for android
