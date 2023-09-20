@@ -1,40 +1,29 @@
 package com.droidgpt.viewmodel
 
 import android.content.Context
-import android.os.Vibrator
 import android.view.SoundEffectConstants
 import android.view.View
-import androidx.compose.material3.Text
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
-import com.aallam.openai.api.core.FinishReason
 import com.aallam.openai.api.http.Timeout
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
-import com.aallam.openai.client.ProxyConfig
-import com.droidgpt.data.Conversation
-import com.droidgpt.data.ConversationDao
-import com.droidgpt.data.ConversationEvent
-import com.droidgpt.data.ConversationRepository
-import com.droidgpt.data.ConversationState
+import com.droidgpt.data.database.Conversation
+import com.droidgpt.data.database.ConversationDao
+import com.droidgpt.data.database.ConversationEvent
+import com.droidgpt.data.database.ConversationState
 import com.droidgpt.data.Data
-import com.droidgpt.data.SerializedConversation
-import com.droidgpt.data.SortType
+import com.droidgpt.data.database.SortType
 import com.droidgpt.data.labels.DataLabels
 import com.droidgpt.data.labels.SettingsLabels
-import com.droidgpt.data.serializeMessageDataList
 import com.droidgpt.model.MessageData
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.ui.composables.takeTitle
@@ -45,17 +34,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlin.math.sin
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -78,13 +63,11 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
     private var openAI : OpenAI
     private var config : OpenAIConfig
     var libraryMsgList = mutableStateListOf<MessageData>()
-    private val completionFlow : CompletionFlow
     var stream = mutableStateOf(true)
     val dynamic = mutableStateOf(true)
     var isHapticEnabled = mutableStateOf(true)
     val conversationDao : ConversationDao
     private val conversationsList = mutableStateListOf<Conversation>()
-    private val repository : ConversationRepository
 
     init {
         this.data = data
@@ -95,9 +78,7 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
         )
         openAI = OpenAI(config = config)
         addToLibraryList(MessageData(ChatMessage(role = ChatRole.System, content = data.getFromSharedPreferences(SettingsLabels.SETTINGS, SettingsLabels.BEHAVIOUR)), LocalDateTime.now()))
-        this.completionFlow = CompletionFlow(openAI)
         this.conversationDao = conversationDao
-        this.repository = ConversationRepository(conversationDao)
     }
 
     //val allConversations : LiveData<List<Conversation>> = repository.allConversations.asLiveData()
@@ -132,7 +113,7 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
             ConversationEvent.SaveConversation -> {
                 val creationDate    = state.value.creationDate
                 val title           = state.value.title
-                val id              = state.value.id
+                //val id              = state.value.id
                 val messageDataList = state.value.messageDataList
 
                 if(messageDataList.isEmpty() || title.isBlank())
@@ -141,7 +122,7 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
                 val conversation = Conversation(
                     creationDate = creationDate,
                     title = title,
-                    id = id,
+                    //id = id,
                     messagesList = messageDataList
                 )
 
@@ -171,7 +152,7 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
                 _state.update { it.copy(title = event.title) }
             }
             is ConversationEvent.SetID -> {
-                _state.update { it.copy(id = event.id) }
+                //_state.update { it.copy(id = event.id) }
             }
             is ConversationEvent.SetMessageDataList -> {
                 _state.update { it.copy(messageDataList = event.messageDataList) }
@@ -264,6 +245,8 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
         }
 
 
+        onEvent(ConversationEvent.SaveConversation)
+
 
         val chatCompletionRequest = ChatCompletionRequest(
             model = ModelId("gpt-3.5-turbo"),
@@ -302,6 +285,8 @@ class ChatViewModel(data: Data, conversationDao: ConversationDao) : ViewModel() 
         }
 
         onEvent(ConversationEvent.SetMessageDataList(libraryMsgList.toList()))
+
+        //onEvent(ConversationEvent.SaveConversation)
 
         loading.value = false
 

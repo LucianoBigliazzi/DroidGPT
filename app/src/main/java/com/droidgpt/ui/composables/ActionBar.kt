@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedback
@@ -41,14 +39,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.aallam.openai.api.BetaOpenAI
 import com.droidgpt.R
-import com.droidgpt.data.ConversationEvent
-import com.droidgpt.data.Data
+import com.droidgpt.data.database.ConversationEvent
 import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.common.ClearChatDialog
 import com.droidgpt.ui.common.Route
@@ -57,9 +53,6 @@ import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 import kotlinx.coroutines.delay
-import com.droidgpt.data.Conversation
-import kotlinx.coroutines.flow.count
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class, BetaOpenAI::class)

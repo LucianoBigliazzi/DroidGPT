@@ -1,6 +1,6 @@
-package com.droidgpt.data
+package com.droidgpt.data.database
 
-import com.droidgpt.model.TimeFormats
+import com.droidgpt.data.TimeFormats
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter

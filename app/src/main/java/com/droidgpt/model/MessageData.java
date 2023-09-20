@@ -1,7 +1,7 @@
 package com.droidgpt.model;
 
 import com.aallam.openai.api.chat.ChatMessage;
-import com.droidgpt.data.LocalDateTimeAdapter;
+import com.droidgpt.data.database.LocalDateTimeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 

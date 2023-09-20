@@ -1,4 +1,4 @@
-package com.droidgpt.data
+package com.droidgpt.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

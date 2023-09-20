@@ -1,4 +1,4 @@
-package com.droidgpt.model;
+package com.droidgpt.data;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;

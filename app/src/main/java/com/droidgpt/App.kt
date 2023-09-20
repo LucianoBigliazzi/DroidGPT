@@ -13,7 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import com.droidgpt.data.ConversationDatabase
+import com.droidgpt.data.database.ConversationDatabase
 import com.droidgpt.data.Data
 import com.droidgpt.data.labels.SettingsLabels
 import com.droidgpt.viewmodel.ChatViewModel

@@ -1,10 +1,10 @@
-package com.droidgpt.data
+package com.droidgpt.data.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.aallam.openai.api.chat.ChatMessage
 import com.droidgpt.model.MessageData
-import com.droidgpt.model.TimeFormats
+import com.droidgpt.data.TimeFormats
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.JsonAdapter
@@ -22,6 +22,10 @@ data class ConversationsList(
 @Entity
 data class Conversation(
 
+    @PrimaryKey(autoGenerate = true)
+    @SerializedName("id")
+    val id : Int = 0,
+
     @JsonAdapter(LocalDateAdapter::class)
     @SerializedName("creationDate")
     val creationDate: LocalDate,
@@ -29,19 +33,8 @@ data class Conversation(
     @SerializedName("title")
     val title: String,
 
-    @PrimaryKey(autoGenerate = true)
-    @SerializedName("id")
-    val id : Int,
-
     @SerializedName("list")
     val messagesList: List<MessageData>
-)
-
-
-// Serialized class for database
-data class SerializedConversation(
-    val id : Int,
-    val serializedMessageList : String
 )
 
 data class MessageDataList(

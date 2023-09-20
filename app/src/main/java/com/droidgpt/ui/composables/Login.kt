@@ -47,7 +47,7 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import com.droidgpt.data.ConversationDatabase
+import com.droidgpt.data.database.ConversationDatabase
 import com.droidgpt.data.Data
 import com.droidgpt.data.KeyManager
 import com.droidgpt.data.labels.SettingsLabels

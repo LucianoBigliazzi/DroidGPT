@@ -24,12 +24,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Send
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -41,7 +38,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -63,14 +59,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import com.droidgpt.R
-import com.droidgpt.data.ConversationDatabase
+import com.droidgpt.data.database.ConversationDatabase
 import com.droidgpt.data.Data
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import com.droidgpt.viewmodel.ChatViewModel
 import com.droidgpt.ui.theme.DroidGPTTheme
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 const val titleInput = "Generate a title for this conversation. It must be short, maximum 4 words. No punctuation, translate in the language of the first message sent."

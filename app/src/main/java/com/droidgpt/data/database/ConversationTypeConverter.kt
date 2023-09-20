@@ -1,12 +1,10 @@
-package com.droidgpt.data
+package com.droidgpt.data.database
 
 import androidx.room.TypeConverter
 import com.droidgpt.model.MessageData
-import com.droidgpt.model.TimeFormats
-import com.google.gson.GsonBuilder
+import com.droidgpt.data.TimeFormats
 import com.google.gson.JsonParser
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 class ConversationTypeConverter {
 

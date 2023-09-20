@@ -1,4 +1,4 @@
-package com.droidgpt.data
+package com.droidgpt.data.database
 
 import com.droidgpt.model.MessageData
 import java.time.LocalDate

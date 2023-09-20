@@ -37,7 +37,7 @@ import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.droidgpt.R
 import com.droidgpt.model.MessageData
-import com.droidgpt.model.TimeFormats
+import com.droidgpt.data.TimeFormats
 import com.droidgpt.ui.common.DotsTyping
 import com.droidgpt.ui.common.performHapticFeedbackIfEnabled
 import java.time.LocalDateTime

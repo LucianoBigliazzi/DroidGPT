@@ -73,13 +73,13 @@ import androidx.room.Room
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.droidgpt.R
-import com.droidgpt.data.ConversationDao
-import com.droidgpt.data.ConversationDatabase
-import com.droidgpt.data.ConversationEvent
-import com.droidgpt.data.ConversationState
-import com.droidgpt.data.ConversationUpdate
+import com.droidgpt.data.database.ConversationDao
+import com.droidgpt.data.database.ConversationDatabase
+import com.droidgpt.data.database.ConversationEvent
+import com.droidgpt.data.database.ConversationState
+import com.droidgpt.data.database.ConversationUpdate
 import com.droidgpt.model.MessageData
-import com.droidgpt.model.TimeFormats
+import com.droidgpt.data.TimeFormats
 import com.droidgpt.ui.chat.BubbleIn
 import com.droidgpt.ui.chat.BubbleOut
 import com.droidgpt.ui.common.ChangePropertyDialog
@@ -88,7 +88,6 @@ import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 import com.droidgpt.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
-import okhttp3.internal.wait
 import java.time.LocalDateTime
 
 
@@ -196,7 +195,7 @@ fun ChatHistoryContent(
 
             Column {
                 if(index != 0) {
-                    if (conversationState.conversations[index - 1].creationDate != conversation.creationDate)
+                    if (conversationState.conversations[index - 1].creationDate.isBefore(conversation.creationDate))
                         DateTitle(date = conversation.creationDate.format(TimeFormats.DATE_TXT))
                 } else
                     DateTitle(date = conversation.creationDate.format(TimeFormats.DATE_TXT))
@@ -204,7 +203,7 @@ fun ChatHistoryContent(
 
 
                 ChatHistoryLazyListItem(
-                    date = conversation.messagesList[1].messageTime,
+                    date = conversation.messagesList[conversation.messagesList.size - 1].messageTime,
                     title = conversation.title,
                     onEditTitle = {
                         currentIndex = index

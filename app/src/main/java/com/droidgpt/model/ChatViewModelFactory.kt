@@ -2,7 +2,7 @@ package com.droidgpt.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.droidgpt.data.ConversationDao
+import com.droidgpt.data.database.ConversationDao
 import com.droidgpt.data.Data
 import com.droidgpt.viewmodel.ChatViewModel
 

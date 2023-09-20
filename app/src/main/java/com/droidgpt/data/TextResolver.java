@@ -1,9 +1,5 @@
 package com.droidgpt.data;
 
-import androidx.annotation.NonNull;
-import androidx.compose.ui.text.AnnotatedString;
-
-import com.droidgpt.model.ChatMessage;
 import com.droidgpt.model.TextMessage;
 
 import java.util.ArrayList;

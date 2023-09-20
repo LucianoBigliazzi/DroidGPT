@@ -1,14 +1,21 @@
 package com.droidgpt.data
 
-import androidx.compose.animation.core.animateRectAsState
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
+import com.droidgpt.data.database.Conversation
+import com.droidgpt.data.database.ConversationsList
+import com.droidgpt.data.database.MessageDataList
+import com.droidgpt.data.database.deserializeConversation
+import com.droidgpt.data.database.deserializeConversationList
+import com.droidgpt.data.database.deserializeMessageData
+import com.droidgpt.data.database.deserializeMessageDataList
+import com.droidgpt.data.database.serializeConversation
+import com.droidgpt.data.database.serializeConversationList
+import com.droidgpt.data.database.serializeMessageData
+import com.droidgpt.data.database.serializeMessageDataList
 import com.droidgpt.model.MessageData
-import com.droidgpt.model.TimeFormats
-import com.google.gson.Gson
 import junit.framework.TestCase
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class SerializeManagerKtTest : TestCase() {
 
@@ -20,7 +27,7 @@ class SerializeManagerKtTest : TestCase() {
     private val messageDataList = MessageDataList(listOf(messageData1, messageData2, messageData3))
 
     private val list = listOf(messageData1, messageData2, messageData3)
-    private val conversation = Conversation(time.toLocalDate(),"title",1, list)
+    private val conversation = Conversation(1, time.toLocalDate(),"title", list)
     private val conversationsList = ConversationsList(listOf(conversation, conversation))
 
 
