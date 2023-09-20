@@ -9,20 +9,27 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -80,6 +87,7 @@ import com.droidgpt.ui.chat.BubbleIn
 import com.droidgpt.ui.chat.BubbleLoading
 import com.droidgpt.ui.chat.BubbleOut
 import com.droidgpt.ui.chat.UserInput
+import com.droidgpt.ui.common.DateDivider
 import com.droidgpt.ui.common.SnackbarVisualsWithError
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
@@ -190,7 +198,7 @@ fun ScaffoldTest(navController: NavHostController, data: Data, viewModel: ChatVi
 }
 
 
-@OptIn(BetaOpenAI::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Conversation(
     paddingValues: PaddingValues,
@@ -226,6 +234,10 @@ fun Conversation(
     }
     val focusManager = LocalFocusManager.current
 
+    val keyboardHeight = remember {
+        mutableIntStateOf(0)
+    }
+
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -242,9 +254,9 @@ fun Conversation(
                 modifier = Modifier
                     .padding(
                         start = 16.dp,
-                        paddingValues.calculateTopPadding(),
+                        top = paddingValues.calculateTopPadding(),
                         end = 16.dp,
-                        paddingValues.calculateBottomPadding()
+                        bottom = paddingValues.calculateBottomPadding() + keyboardHeight.intValue.dp
                     ),
                 state = listState
             ) {
@@ -253,15 +265,22 @@ fun Conversation(
 //                    BubbleOut(ChatMessage(ApiReply("Ciao come va", false), true, 12.30.toLong()))
 //                }
 
-                items(viewModel.libraryMsgList) {messageData ->
+                itemsIndexed(viewModel.libraryMsgList) {index, messageData ->
+
+                    val modifier : Modifier = Modifier.fillMaxWidth()
+                    val isLast = viewModel.libraryMsgList.size - 1 == index
+
                     displayLottie = false
                     //displayLoadingBubble = !displayLoadingBubble
                     if(messageData.chatMessage.role == ChatRole.User) {
-                        BubbleOut(messageData = messageData, viewModel.isHapticEnabled.value)
+                        val prevTime = viewModel.libraryMsgList[index - 1].messageTime
+                        if((viewModel.libraryMsgList.size > 0 && prevTime.isBefore(messageData.messageTime) && prevTime.dayOfYear != messageData.messageTime.dayOfYear) || index == 1)
+                            DateDivider(localDateTime = messageData.messageTime)
+                        BubbleOut(modifier, messageData = messageData, viewModel.isHapticEnabled.value)
                         displayLoadingBubble = true
                     } else if(messageData.chatMessage.role == ChatRole.Assistant) {
                         displayLoadingBubble = false
-                        BubbleIn(messageData = messageData, viewModel.isHapticEnabled.value)
+                        BubbleIn(modifier, messageData = messageData, viewModel.isHapticEnabled.value, isLast)
                         if(!viewModel.stream.value)
                             scrollOnNewMessage = true
                         if(listState.canScrollForward && viewModel.isLoading())
@@ -294,7 +313,7 @@ fun Conversation(
 
         }
 
-        UserInput(viewModel = viewModel) { listState }
+        UserInput(viewModel = viewModel, listState = { listState })
     }
 
 

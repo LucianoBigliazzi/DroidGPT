@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -45,6 +45,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -84,6 +85,7 @@ import com.droidgpt.ui.chat.BubbleIn
 import com.droidgpt.ui.chat.BubbleOut
 import com.droidgpt.ui.common.ChangePropertyDialog
 import com.droidgpt.ui.common.ChatHistoryLazyListItem
+import com.droidgpt.ui.common.DateDivider
 import com.droidgpt.ui.theme.DroidGPTTheme
 import com.droidgpt.ui.theme.parseSurfaceColor
 import com.droidgpt.viewmodel.ChatViewModel
@@ -407,22 +409,34 @@ fun msgNum(size: Int): String {
 
 @Composable
 fun PreviewContent(list: List<MessageData>) {
+
+    val state = rememberLazyListState()
+
     Box (
         modifier = Modifier.clip(RoundedCornerShape(20.dp))
     ) {
         LazyColumn(
+            state = state,
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 8.dp)
         ){
 
-            items(list){
-                if(it.chatMessage.role == ChatRole.User)
-                    BubbleOut(messageData = it, isHapticEnabled = false)
-                else if(it.chatMessage.role == ChatRole.Assistant)
-                    BubbleIn(messageData = it, isHapticEnabled = false)
+            itemsIndexed(list) {index, item ->
+
+                if(item.chatMessage.role == ChatRole.User) {
+                    if (item.messageTime.dayOfYear > list[index - 1].messageTime.dayOfYear || index == 1)
+                        DateDivider(localDateTime = item.messageTime)
+                    BubbleOut(messageData = item, isHapticEnabled = false)
+                }
+                else if(item.chatMessage.role == ChatRole.Assistant)
+                    BubbleIn(messageData = item, isHapticEnabled = false, isLast = false)
             }
         }
+    }
+
+    LaunchedEffect(true){
+        state.animateScrollToItem(list.size)
     }
 }
 

@@ -8,9 +8,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +49,7 @@ import java.time.LocalDateTime
 
 @Composable
 fun BubbleOut(
+    modifier: Modifier = Modifier,
     messageData: MessageData,
     isHapticEnabled: Boolean
 ){
@@ -71,9 +76,7 @@ fun BubbleOut(
     }
 
     Column (
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(64.dp, 0.dp, 0.dp, 0.dp),
+        modifier = modifier.fillMaxWidth().padding(64.dp, 0.dp, 0.dp, 0.dp),
         horizontalAlignment = Alignment.End,
     ) {
 
@@ -106,9 +109,11 @@ fun BubbleOut(
 
 @Composable
 fun BubbleIn(
+    modifier: Modifier = Modifier,
     messageData: MessageData,
-    isHapticEnabled: Boolean
-){
+    isHapticEnabled: Boolean,
+    isLast: Boolean
+) {
 
     val haptic = LocalHapticFeedback.current
     val clipboardManager = ContextCompat.getSystemService(LocalContext.current, ClipboardManager::class.java)
@@ -134,9 +139,7 @@ fun BubbleIn(
     }
 
     Column (
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(0.dp, 0.dp, 64.dp)
+        modifier = modifier.padding(0.dp, 0.dp, 64.dp)
     ) {
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -162,6 +165,9 @@ fun BubbleIn(
         )
 
         Spacer(modifier = Modifier.height(2.dp))
+
+//        if(isLast)
+//            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
 }
 
@@ -312,11 +318,24 @@ fun parseColor(
 @Preview(showBackground = true)
 @Composable
 fun ChatPreviewIn(){
+
+    val isLast = false
+
     MaterialTheme {
         Column {
-            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
+            BubbleIn(
+                modifier = Modifier.padding(),
+                MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()),
+                false,
+                isLast
+            )
 
-            BubbleIn(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
+            BubbleIn(
+                modifier = Modifier.padding(),
+                MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()),
+                false,
+                isLast
+            )
         }
     }
 }
@@ -326,7 +345,7 @@ fun ChatPreviewIn(){
 @Composable
 fun ChatPreviewOut(){
     MaterialTheme {
-        BubbleOut(MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
+        BubbleOut(modifier = Modifier.padding(), MessageData(ChatMessage(ChatRole.Assistant, "Ciao come va?"), LocalDateTime.now()), false)
     }
 }
 
